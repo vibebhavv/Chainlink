@@ -161,10 +161,10 @@ networkx>=3.3
 
 </details>
 
-### 3. Start the backend
+### 3. Start the app
 
 ```bash
-uvicorn backend.app:app --reload --port 8000
+pythonx launch.py
 ```
 
 The API will be available at `http://127.0.0.1:8000`.  
@@ -377,14 +377,6 @@ Do not use Chainlink to:
 - Violate applicable laws in your jurisdiction
 
 The authors accept no liability for misuse. All on-chain data analysed by this tool is already publicly visible on the Bitcoin blockchain.
-
----
-
-## License
-
-MIT License — see [`LICENSE`](LICENSE) for details.
-
----
 
 <div align="center">
   <sub>Built with FastAPI · vis.js · Blockstream API · NetworkX</sub>
