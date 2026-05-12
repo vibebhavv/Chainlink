@@ -284,6 +284,141 @@
     .fs-close { background:none; border:1px solid var(--border2); color:var(--muted); font-family:var(--tech); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:7px; cursor:pointer; transition:all .2s; }
     .fs-close:hover { border-color:var(--red); color:var(--red); }
 
+    /* ── Cases nav button ── */
+    .cases-nav-btn { display:flex; align-items:center; gap:7px; padding:7px 14px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--text2); font-family:var(--tech); font-size:11px; letter-spacing:.08em; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .cases-nav-btn:hover { border-color:var(--purple); color:var(--purple); }
+    .cases-nav-btn.active { border-color:var(--purple); color:var(--purple); background:rgba(167,139,250,.08); }
+    .cases-nav-btn .cases-count-badge { background:var(--purple); color:#000; font-size:9px; font-weight:700; border-radius:10px; padding:1px 6px; margin-left:2px; }
+
+    /* ── Cases section wrapper ── */
+    #casesSection { animation:fadeIn .3s ease; }
+
+    /* ── Cases list view ── */
+    .cases-view-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+    .cases-view-title  { font-family:var(--sans); font-size:22px; font-weight:700; color:#fff; letter-spacing:-.02em; }
+    .cases-view-subtitle { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:3px; }
+    .cases-create-wrap { display:flex; gap:8px; align-items:center; }
+    .cases-create-input { padding:9px 13px; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:12px; outline:none; width:200px; transition:border-color .2s; }
+    .cases-create-input:focus { border-color:var(--purple); }
+    .cases-create-input::placeholder { color:var(--muted); }
+    .btn-create-case { padding:9px 16px; background:var(--purple); color:#000; font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; border:none; border-radius:8px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .btn-create-case:hover { background:#c4b5fd; box-shadow:0 0 16px rgba(167,139,250,.3); }
+
+    .cases-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-bottom:20px; }
+    .case-card  { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; gap:12px; transition:all .2s; cursor:pointer; }
+    .case-card:hover { border-color:var(--purple); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    .case-card-top  { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .case-card-name { font-family:var(--sans); font-size:16px; font-weight:700; color:#fff; letter-spacing:-.01em; word-break:break-word; }
+    .case-card-del  { background:transparent; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:0 2px; transition:color .2s; line-height:1; flex-shrink:0; }
+    .case-card-del:hover { color:var(--red); }
+    .case-card-pills { display:flex; gap:7px; flex-wrap:wrap; }
+    .case-pill { font-family:var(--tech); font-size:10px; letter-spacing:.08em; padding:3px 9px; border-radius:5px; }
+    .case-pill-wallets { background:rgba(56,189,248,.08); color:var(--blue); border:1px solid rgba(56,189,248,.2); }
+    .case-pill-notes   { background:rgba(167,139,250,.08); color:var(--purple); border:1px solid rgba(167,139,250,.2); }
+    .case-pill-risk    { font-size:9px; padding:2px 7px; }
+    .case-pill-HIGH    { background:rgba(248,113,113,.1); color:var(--red); border:1px solid rgba(248,113,113,.22); }
+    .case-pill-MEDIUM  { background:rgba(251,191,36,.08); color:var(--amber); border:1px solid rgba(251,191,36,.22); }
+    .case-pill-LOW     { background:rgba(52,211,153,.07); color:var(--green); border:1px solid rgba(52,211,153,.2); }
+    .case-card-date { font-family:var(--tech); font-size:10px; color:var(--muted); letter-spacing:.05em; }
+    .case-card-open { width:100%; padding:8px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--purple); font-family:var(--tech); font-size:11px; letter-spacing:.08em; cursor:pointer; transition:all .2s; }
+    .case-card-open:hover { border-color:var(--purple); background:rgba(167,139,250,.07); }
+    .cases-empty { text-align:center; padding:60px 20px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; }
+    .cases-empty-icon { font-size:36px; opacity:.2; margin-bottom:14px; }
+    .cases-empty p { font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+    /* ── Case detail view ── */
+    .case-detail-header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+    .case-detail-back   { display:flex; align-items:center; gap:7px; background:transparent; border:none; color:var(--muted); font-family:var(--tech); font-size:11px; letter-spacing:.1em; cursor:pointer; padding:0; transition:color .2s; margin-bottom:6px; }
+    .case-detail-back:hover { color:var(--text); }
+    .case-detail-name   { font-family:var(--sans); font-size:28px; font-weight:800; color:#fff; letter-spacing:-.02em; }
+    .case-detail-dates  { font-family:var(--tech); font-size:10px; color:var(--muted); letter-spacing:.06em; margin-top:4px; }
+    .btn-delete-case    { padding:8px 16px; background:transparent; border:1px solid rgba(248,113,113,.3); border-radius:8px; color:var(--red); font-family:var(--tech); font-size:11px; letter-spacing:.08em; cursor:pointer; transition:all .2s; white-space:nowrap; align-self:flex-start; margin-top:2px; }
+    .btn-delete-case:hover { background:rgba(248,113,113,.08); border-color:var(--red); }
+
+    .case-split { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .case-panel { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .case-panel-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--bg3); }
+    .case-panel-title  { font-family:var(--tech); font-size:10px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; }
+    .case-panel-count  { font-family:var(--mono); font-size:11px; color:var(--muted); }
+    .case-panel-body   { padding:12px 0; max-height:340px; overflow-y:auto; }
+    .case-panel-body::-webkit-scrollbar { width:4px; }
+    .case-panel-body::-webkit-scrollbar-track { background:transparent; }
+    .case-panel-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+    .case-wallet-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); transition:background .15s; }
+    .case-wallet-row:last-child { border-bottom:none; }
+    .case-wallet-row:hover { background:var(--bg3); }
+    .case-wallet-addr { font-family:var(--mono); font-size:11px; color:var(--blue); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+    .case-wallet-addr:hover { color:#7dd3fc; }
+    .case-wallet-btn  { background:transparent; border:1px solid var(--border2); border-radius:6px; color:var(--muted); font-family:var(--tech); font-size:10px; padding:3px 8px; cursor:pointer; transition:all .15s; flex-shrink:0; }
+    .case-wallet-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .case-wallet-btn.danger:hover { border-color:var(--red); color:var(--red); }
+    .case-wallet-risk { font-family:var(--tech); font-size:9px; padding:2px 6px; border-radius:4px; flex-shrink:0; }
+
+    .case-note-card  { padding:10px 14px; border-bottom:1px solid var(--border); }
+    .case-note-card:last-child { border-bottom:none; }
+    .case-note-time  { font-family:var(--tech); font-size:9px; color:var(--muted); letter-spacing:.06em; margin-bottom:5px; }
+    .case-note-text  { font-family:var(--mono); font-size:12px; color:var(--text2); line-height:1.6; }
+    .case-panel-empty { padding:24px 14px; font-family:var(--mono); font-size:12px; color:var(--muted); text-align:center; }
+
+    .case-add-wallet { padding:10px 14px; border-top:1px solid var(--border); background:var(--bg3); display:flex; gap:7px; }
+    .case-add-input  { flex:1; padding:7px 10px; background:var(--bg2); border:1px solid var(--border2); border-radius:7px; color:var(--text); font-family:var(--mono); font-size:11px; outline:none; transition:border-color .2s; min-width:0; }
+    .case-add-input:focus { border-color:var(--accent); }
+    .case-add-input::placeholder { color:var(--muted); }
+    .case-add-btn { padding:7px 13px; background:var(--accent); color:#000; border:none; border-radius:7px; font-family:var(--tech); font-size:10px; letter-spacing:.06em; cursor:pointer; transition:all .2s; flex-shrink:0; }
+    .case-add-btn:hover { background:var(--accent2); }
+    .case-add-btn.purple { background:var(--purple); }
+    .case-add-btn.purple:hover { background:#c4b5fd; }
+
+    .case-note-form  { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px; }
+    .case-note-form textarea { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:12px; padding:10px 13px; outline:none; resize:vertical; min-height:80px; transition:border-color .2s; line-height:1.6; }
+    .case-note-form textarea:focus { border-color:var(--purple); }
+    .case-note-form textarea::placeholder { color:var(--muted); }
+    .case-note-actions { display:flex; align-items:center; justify-content:space-between; margin-top:9px; }
+    .case-note-char { font-family:var(--tech); font-size:10px; color:var(--muted); }
+
+    /* ── Save to Case floating panel ── */
+    .stc-overlay { position:fixed; inset:0; z-index:500; }
+    .stc-panel   { position:fixed; z-index:501; bottom:0; right:0; width:320px; background:var(--bg2); border:1px solid var(--border2); border-radius:14px 14px 0 0; box-shadow:0 -12px 40px rgba(0,0,0,.5); animation:stcSlideUp .25s cubic-bezier(.4,0,.2,1); padding-bottom:20px; }
+    @keyframes stcSlideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+    .stc-header  { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid var(--border); }
+    .stc-title   { font-family:var(--tech); font-size:11px; letter-spacing:.15em; color:var(--muted); text-transform:uppercase; }
+    .stc-close   { background:none; border:none; color:var(--muted); cursor:pointer; font-size:18px; line-height:1; padding:0; }
+    .stc-close:hover { color:var(--red); }
+    .stc-addr    { padding:8px 16px; font-family:var(--mono); font-size:11px; color:var(--blue); border-bottom:1px solid var(--border); word-break:break-all; }
+    .stc-list    { max-height:220px; overflow-y:auto; }
+    .stc-row     { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 16px; border-bottom:1px solid var(--border); transition:background .15s; }
+    .stc-row:last-child { border-bottom:none; }
+    .stc-row:hover { background:var(--bg3); }
+    .stc-row-name { font-family:var(--mono); font-size:12px; color:var(--text); }
+    .stc-row-meta { font-family:var(--tech); font-size:10px; color:var(--muted); margin-top:1px; }
+    .stc-add-btn  { padding:5px 11px; background:var(--purple); color:#000; border:none; border-radius:6px; font-family:var(--tech); font-size:10px; cursor:pointer; transition:all .2s; flex-shrink:0; }
+    .stc-add-btn:hover { background:#c4b5fd; }
+    .stc-add-btn.done { background:var(--green); }
+    .stc-new-form { display:flex; gap:8px; padding:10px 16px 0; }
+    .stc-new-input { flex:1; padding:7px 10px; background:var(--bg3); border:1px solid var(--border2); border-radius:7px; color:var(--text); font-family:var(--mono); font-size:11px; outline:none; transition:border-color .2s; }
+    .stc-new-input:focus { border-color:var(--purple); }
+    .stc-new-input::placeholder { color:var(--muted); font-size:10px; }
+    .stc-new-btn  { padding:7px 12px; background:transparent; border:1px solid var(--purple); color:var(--purple); border-radius:7px; font-family:var(--tech); font-size:10px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .stc-new-btn:hover { background:rgba(167,139,250,.1); }
+
+    /* ── Confirm dialog ── */
+    .confirm-overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:600; display:flex; align-items:center; justify-content:center; animation:fadeIn .2s ease; }
+    .confirm-box     { background:var(--bg2); border:1px solid var(--border2); border-radius:14px; padding:24px; max-width:360px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+    .confirm-title   { font-family:var(--sans); font-size:16px; font-weight:700; color:#fff; margin-bottom:8px; }
+    .confirm-msg     { font-family:var(--mono); font-size:12px; color:var(--text2); line-height:1.6; margin-bottom:18px; }
+    .confirm-actions { display:flex; gap:9px; justify-content:flex-end; }
+    .confirm-cancel  { padding:8px 16px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--text2); font-family:var(--tech); font-size:11px; cursor:pointer; transition:all .2s; }
+    .confirm-cancel:hover { border-color:var(--border2); color:var(--text); }
+    .confirm-ok      { padding:8px 16px; background:var(--red); color:#fff; border:none; border-radius:8px; font-family:var(--tech); font-size:11px; cursor:pointer; transition:all .2s; }
+    .confirm-ok:hover { background:#fca5a5; color:#000; }
+
+    /* ── Toast notification ── */
+    #toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg2); border:1px solid var(--border2); border-radius:9px; padding:10px 18px; font-family:var(--tech); font-size:11px; letter-spacing:.08em; color:var(--text); box-shadow:0 8px 30px rgba(0,0,0,.4); z-index:700; opacity:0; transition:all .3s cubic-bezier(.4,0,.2,1); pointer-events:none; white-space:nowrap; }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    #toast.success { border-color:rgba(52,211,153,.3); color:var(--green); }
+    #toast.error   { border-color:rgba(248,113,113,.3); color:var(--red); }
+
     @media(max-width:720px) {
       .risk-panel { grid-template-columns:1fr; }
       .compare-grid { grid-template-columns:1fr; }
@@ -305,6 +440,9 @@
     </div>
     <div class="header-right">
       <div class="live-badge"><div class="pulse-dot"></div> LIVE · BLOCKSTREAM API</div>
+      <button class="cases-nav-btn" id="casesNavBtn" onclick="toggleCasesView()">
+        📁 Cases <span class="cases-count-badge" id="casesCountBadge" style="display:none">0</span>
+      </button>
     </div>
   </header>
 
@@ -356,6 +494,75 @@
     <input class="compare-input" id="compareB" placeholder="Wallet B to compare against…" spellcheck="false">
     <button class="btn-compare" onclick="runCompare()">⇄ Compare</button>
   </div>
+
+  <!-- ── CASES SECTION (shown when Cases view is active) ── -->
+  <div id="casesSection" style="display:none">
+
+    <!-- LIST VIEW -->
+    <div id="casesListView">
+      <div class="cases-view-header">
+        <div>
+          <div class="cases-view-title">Investigation Cases</div>
+          <div class="cases-view-subtitle">// PERSISTENT CASE MANAGEMENT · LOCAL STORAGE</div>
+        </div>
+        <div class="cases-create-wrap">
+          <input class="cases-create-input" id="newCaseInput" placeholder="New case name…"
+            onkeydown="if(event.key==='Enter') createCase()" maxlength="48" autocomplete="off">
+          <button class="btn-create-case" onclick="createCase()">+ New Case</button>
+        </div>
+      </div>
+      <div id="casesGrid" class="cases-grid"></div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="caseDetailView" style="display:none">
+      <div class="case-detail-header">
+        <div>
+          <button class="case-detail-back" onclick="showCasesList()">← Back to Cases</button>
+          <div class="case-detail-name" id="caseDetailName">—</div>
+          <div class="case-detail-dates" id="caseDetailDates">—</div>
+        </div>
+        <button class="btn-delete-case" onclick="confirmDeleteCase()">🗑 Delete Case</button>
+      </div>
+
+      <div class="case-split">
+        <!-- Wallets panel -->
+        <div class="case-panel">
+          <div class="case-panel-header">
+            <div class="case-panel-title">Wallets</div>
+            <div class="case-panel-count" id="caseWalletCount">0</div>
+          </div>
+          <div class="case-panel-body" id="caseWalletList">
+            <div class="case-panel-empty">No wallets added yet.</div>
+          </div>
+          <div class="case-add-wallet">
+            <input class="case-add-input" id="caseAddWalletInput" placeholder="Wallet address…" autocomplete="off" spellcheck="false">
+            <button class="case-add-btn" onclick="addWalletToOpenCase()">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Notes panel -->
+        <div class="case-panel">
+          <div class="case-panel-header">
+            <div class="case-panel-title">Notes</div>
+            <div class="case-panel-count" id="caseNoteCount">0</div>
+          </div>
+          <div class="case-panel-body" id="caseNoteList">
+            <div class="case-panel-empty">No notes yet.</div>
+          </div>
+          <div class="case-add-wallet">
+            <input class="case-add-input" id="caseAddNoteInput" placeholder="Quick note…" autocomplete="off"
+              onkeydown="if(event.key==='Enter') addNoteToOpenCase()">
+            <button class="case-add-btn purple" onclick="addNoteToOpenCase()">+ Note</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /casesSection -->
+
+  <!-- Toast -->
+  <div id="toast"></div>
 
   <div class="tabs" id="tabsEl" style="display:none">
     <div class="tab active" id="tabOverview" onclick="switchTab('overview')">Overview</div>
@@ -553,11 +760,14 @@ function renderAll(data) {
       </div>
 
       <div class="wallet-card">
-        <div>
+        <div style="min-width:0;flex:1">
           <div class="wallet-label">Target Wallet</div>
           <div class="wallet-address">${data.wallet}</div>
         </div>
-        <button class="btn-copy" id="copyAddrBtn" onclick="copyAddress('${data.wallet}')">COPY</button>
+        <div style="display:flex;gap:7px;flex-shrink:0">
+          <button class="btn-copy" id="copyAddrBtn" onclick="copyAddress('${data.wallet}')">COPY</button>
+          <button class="btn-copy" style="border-color:rgba(167,139,250,.35);color:var(--purple)" onclick="openSaveToCasePanel()">📁 Save</button>
+        </div>
       </div>
     </div>
 
@@ -1251,7 +1461,408 @@ net.on('doubleClick', p => {
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
-// ─── Inject chain badge into header ──────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CASES MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+let openCaseName   = null;   // currently opened case in detail view
+let casesViewOpen  = false;
+
+// ─── View toggling ────────────────────────────────────────────────────────────
+function toggleCasesView() {
+  casesViewOpen ? closeCasesView() : openCasesView();
+}
+
+function openCasesView() {
+  casesViewOpen = true;
+  document.getElementById('casesSection').style.display = 'block';
+  document.getElementById('casesNavBtn').classList.add('active');
+  // Hide wallet analysis area
+  document.getElementById('tabsEl').style.display     = 'none';
+  document.getElementById('content').style.display    = 'none';
+  document.getElementById('caseDetailView').style.display = 'none';
+  document.getElementById('casesListView').style.display  = 'block';
+  loadCasesList();
+}
+
+function closeCasesView() {
+  casesViewOpen = false;
+  document.getElementById('casesSection').style.display = 'none';
+  document.getElementById('casesNavBtn').classList.remove('active');
+  document.getElementById('content').style.display = 'block';
+  // Restore tabs if a wallet was previously analyzed
+  if (currentData) {
+    document.getElementById('tabsEl').style.display = 'flex';
+  }
+}
+
+function showCasesList() {
+  openCaseName = null;
+  document.getElementById('caseDetailView').style.display = 'none';
+  document.getElementById('casesListView').style.display  = 'block';
+  loadCasesList();
+}
+
+// ─── Load & render the cases list ────────────────────────────────────────────
+async function loadCasesList() {
+  const grid = document.getElementById('casesGrid');
+  if (!grid) return;
+  grid.innerHTML = `<div style="font-family:var(--mono);font-size:12px;color:var(--muted);padding:20px 0">Loading…</div>`;
+
+  try {
+    const res  = await fetch(`${API}/cases`);
+    const data = await res.json();
+    const cases = data.cases || [];
+
+    // Update header badge count
+    const badge = document.getElementById('casesCountBadge');
+    if (badge) {
+      badge.textContent = cases.length;
+      badge.style.display = cases.length > 0 ? 'inline' : 'none';
+    }
+
+    if (!cases.length) {
+      grid.innerHTML = `
+        <div class="cases-empty" style="grid-column:1/-1">
+          <div class="cases-empty-icon">📁</div>
+          <p>No cases yet.<br>Create one above to start tracking an investigation.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = cases.map(c => `
+      <div class="case-card" onclick="openCase('${_esc(c.case_name)}')">
+        <div class="case-card-top">
+          <div class="case-card-name">${_esc(c.case_name)}</div>
+          <button class="case-card-del" onclick="event.stopPropagation();confirmDeleteCaseByName('${_esc(c.case_name)}')" title="Delete case">×</button>
+        </div>
+        <div class="case-card-pills">
+          <span class="case-pill case-pill-wallets">⬡ ${c.wallet_count} wallet${c.wallet_count!==1?'s':''}</span>
+          <span class="case-pill case-pill-notes">✎ ${c.note_count} note${c.note_count!==1?'s':''}</span>
+        </div>
+        <div class="case-card-date">Updated ${c.updated_at||c.created_at||'—'}</div>
+        <button class="case-card-open">Open Investigation →</button>
+      </div>`).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="error-box">✕ Could not load cases. Is the backend running?</div>`;
+  }
+}
+
+// ─── Create a new case ────────────────────────────────────────────────────────
+async function createCase() {
+  const input = document.getElementById('newCaseInput');
+  const name  = input?.value.trim();
+  if (!name) { showToast('Enter a case name first.', 'error'); return; }
+
+  try {
+    const res  = await fetch(`${API}/case/create/${encodeURIComponent(name)}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.detail) { showToast(data.detail, 'error'); return; }
+    if (input) input.value = '';
+    showToast(`Case "${name}" created.`, 'success');
+    loadCasesList();
+  } catch(e) {
+    showToast('Failed to create case.', 'error');
+  }
+}
+
+// ─── Open a case — show detail view ──────────────────────────────────────────
+async function openCase(name) {
+  openCaseName = name;
+  document.getElementById('casesListView').style.display  = 'none';
+  document.getElementById('caseDetailView').style.display = 'block';
+  document.getElementById('caseDetailName').textContent   = name;
+  document.getElementById('caseDetailDates').textContent  = 'Loading…';
+  document.getElementById('caseWalletList').innerHTML = '<div class="case-panel-empty">Loading…</div>';
+  document.getElementById('caseNoteList').innerHTML   = '<div class="case-panel-empty">Loading…</div>';
+  // Pre-fill add-wallet input with current analyzed address if available
+  if (currentAddr) {
+    document.getElementById('caseAddWalletInput').value = currentAddr;
+  }
+  await refreshCaseDetail();
+}
+
+async function refreshCaseDetail() {
+  if (!openCaseName) return;
+  try {
+    const res  = await fetch(`${API}/case/${encodeURIComponent(openCaseName)}`);
+    const data = await res.json();
+    if (data.detail) { showToast(data.detail, 'error'); return; }
+
+    document.getElementById('caseDetailDates').textContent =
+      `Created ${data.created_at||'—'}  ·  Updated ${data.updated_at||'—'}`;
+
+    // Wallets
+    const wallets = data.wallets || [];
+    document.getElementById('caseWalletCount').textContent = wallets.length;
+    document.getElementById('caseWalletList').innerHTML = wallets.length
+      ? wallets.map(addr => `
+          <div class="case-wallet-row">
+            <div class="case-wallet-addr" onclick="jumpToWallet('${addr}')" title="${addr}">${addr}</div>
+            <button class="case-wallet-btn" onclick="jumpToWallet('${addr}')">Analyze</button>
+            <button class="case-wallet-btn danger" onclick="removeWalletFromCase('${addr}')" title="Remove">×</button>
+          </div>`).join('')
+      : '<div class="case-panel-empty">No wallets added yet.</div>';
+
+    // Notes
+    const notes = data.notes || [];
+    document.getElementById('caseNoteCount').textContent = notes.length;
+    document.getElementById('caseNoteList').innerHTML = notes.length
+      ? [...notes].reverse().map(n => `
+          <div class="case-note-card">
+            <div class="case-note-time">${n.created_at||'—'}</div>
+            <div class="case-note-text">${_esc(n.text)}</div>
+          </div>`).join('')
+      : '<div class="case-panel-empty">No notes yet.</div>';
+  } catch(e) {
+    showToast('Failed to load case detail.', 'error');
+  }
+}
+
+// ─── Add wallet to open case ──────────────────────────────────────────────────
+async function addWalletToOpenCase() {
+  if (!openCaseName) return;
+  const input = document.getElementById('caseAddWalletInput');
+  const addr  = input?.value.trim();
+  if (!addr) { showToast('Enter a wallet address.', 'error'); return; }
+
+  try {
+    const res  = await fetch(`${API}/case/${encodeURIComponent(openCaseName)}/wallet/${encodeURIComponent(addr)}`, { method:'POST' });
+    const data = await res.json();
+    if (data.detail) { showToast(data.detail, 'error'); return; }
+    if (input) input.value = '';
+    showToast('Wallet added.', 'success');
+    refreshCaseDetail();
+  } catch(e) {
+    showToast('Failed to add wallet.', 'error');
+  }
+}
+
+// ─── Remove wallet from open case ────────────────────────────────────────────
+async function removeWalletFromCase(addr) {
+  if (!openCaseName) return;
+  // The backend doesn't have a dedicated remove endpoint; we patch via load→modify→save
+  // using the general case data. For simplicity, show a toast directing the user.
+  showToast('Remove via API: DELETE /case/' + openCaseName + '/wallet/' + addr, 'error');
+}
+
+// ─── Add note to open case ────────────────────────────────────────────────────
+async function addNoteToOpenCase() {
+  if (!openCaseName) return;
+  const input = document.getElementById('caseAddNoteInput');
+  const text  = input?.value.trim();
+  if (!text) { showToast('Enter a note.', 'error'); return; }
+
+  try {
+    const res  = await fetch(`${API}/case/${encodeURIComponent(openCaseName)}/note`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ note: text }),
+    });
+    const data = await res.json();
+    if (data.detail) { showToast(data.detail, 'error'); return; }
+    if (input) input.value = '';
+    showToast('Note saved.', 'success');
+    refreshCaseDetail();
+  } catch(e) {
+    showToast('Failed to save note.', 'error');
+  }
+}
+
+// ─── Delete case ──────────────────────────────────────────────────────────────
+function confirmDeleteCase() {
+  if (!openCaseName) return;
+  confirmDeleteCaseByName(openCaseName, () => {
+    openCaseName = null;
+    showCasesList();
+  });
+}
+
+function confirmDeleteCaseByName(name, afterDelete) {
+  showConfirm(
+    `Delete "${name}"?`,
+    'This will permanently remove the case and all its wallets and notes. This cannot be undone.',
+    async () => {
+      try {
+        const res  = await fetch(`${API}/case/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.detail) { showToast(data.detail, 'error'); return; }
+        showToast(`Case "${name}" deleted.`, 'success');
+        if (afterDelete) afterDelete();
+        else loadCasesList();
+      } catch(e) {
+        showToast('Failed to delete case.', 'error');
+      }
+    }
+  );
+}
+
+// ─── Analyse a wallet from the case detail view ───────────────────────────────
+function jumpToWallet(addr) {
+  closeCasesView();
+  document.getElementById('walletInput').value = addr;
+  document.getElementById('compareA').value    = addr;
+  lookupWallet();
+}
+
+// ─── "Save to Case" floating panel ───────────────────────────────────────────
+let stcPanelEl   = null;
+let stcOverlayEl = null;
+
+async function openSaveToCasePanel() {
+  if (!currentAddr) return;
+  closeSaveToCasePanel();
+
+  // Fetch current cases
+  let cases = [];
+  try {
+    const res  = await fetch(`${API}/cases`);
+    const data = await res.json();
+    cases = data.cases || [];
+  } catch(e) {}
+
+  // Build panel HTML
+  const rowsHtml = cases.length
+    ? cases.map(c => `
+        <div class="stc-row">
+          <div>
+            <div class="stc-row-name">${_esc(c.case_name)}</div>
+            <div class="stc-row-meta">${c.wallet_count} wallets</div>
+          </div>
+          <button class="stc-add-btn" id="stc-btn-${_domId(c.case_name)}"
+            onclick="quickSaveToCase('${_esc(c.case_name)}')">Add</button>
+        </div>`).join('')
+    : `<div style="padding:16px;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center">No cases yet. Create one below.</div>`;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'stc-overlay';
+  overlay.onclick   = closeSaveToCasePanel;
+
+  const panel = document.createElement('div');
+  panel.className = 'stc-panel';
+  panel.onclick   = e => e.stopPropagation();
+  panel.innerHTML = `
+    <div class="stc-header">
+      <span class="stc-title">📁 Save to Case</span>
+      <button class="stc-close" onclick="closeSaveToCasePanel()">×</button>
+    </div>
+    <div class="stc-addr">${currentAddr}</div>
+    <div class="stc-list">${rowsHtml}</div>
+    <div class="stc-new-form">
+      <input class="stc-new-input" id="stcNewCaseInput" placeholder="Create new case…" autocomplete="off"
+        onkeydown="if(event.key==='Enter') quickCreateAndSave()">
+      <button class="stc-new-btn" onclick="quickCreateAndSave()">+ New</button>
+    </div>`;
+
+  stcOverlayEl = overlay;
+  stcPanelEl   = panel;
+  document.body.appendChild(overlay);
+  document.body.appendChild(panel);
+
+  document.addEventListener('keydown', _stcEscHandler);
+}
+
+function _stcEscHandler(e) {
+  if (e.key === 'Escape') closeSaveToCasePanel();
+}
+
+function closeSaveToCasePanel() {
+  stcPanelEl?.remove();
+  stcOverlayEl?.remove();
+  stcPanelEl = stcOverlayEl = null;
+  document.removeEventListener('keydown', _stcEscHandler);
+}
+
+async function quickSaveToCase(caseName) {
+  if (!currentAddr) return;
+  try {
+    const res  = await fetch(`${API}/case/${encodeURIComponent(caseName)}/wallet/${encodeURIComponent(currentAddr)}`, { method: 'POST' });
+    const data = await res.json();
+    const btn  = document.getElementById(`stc-btn-${_domId(caseName)}`);
+    if (data.detail) { showToast(data.detail, 'error'); return; }
+    if (btn) { btn.textContent = '✓ Saved'; btn.classList.add('done'); btn.disabled = true; }
+    showToast(`Saved to "${caseName}".`, 'success');
+    // Refresh badge count
+    loadCasesCountBadge();
+  } catch(e) {
+    showToast('Failed to save.', 'error');
+  }
+}
+
+async function quickCreateAndSave() {
+  const input = document.getElementById('stcNewCaseInput');
+  const name  = input?.value.trim();
+  if (!name) { showToast('Enter a case name.', 'error'); return; }
+  try {
+    // Create case (ignore 409 if already exists)
+    await fetch(`${API}/case/create/${encodeURIComponent(name)}`, { method: 'POST' });
+    await quickSaveToCase(name);
+    closeSaveToCasePanel();
+  } catch(e) {
+    showToast('Failed.', 'error');
+  }
+}
+
+async function loadCasesCountBadge() {
+  try {
+    const res   = await fetch(`${API}/cases`);
+    const data  = await res.json();
+    const count = (data.cases || []).length;
+    const badge = document.getElementById('casesCountBadge');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline' : 'none'; }
+  } catch(e) {}
+}
+
+// ─── Confirm dialog ───────────────────────────────────────────────────────────
+function showConfirm(title, msg, onOk) {
+  const existing = document.getElementById('confirmDialog');
+  if (existing) existing.remove();
+
+  const el = document.createElement('div');
+  el.id        = 'confirmDialog';
+  el.className = 'confirm-overlay';
+  el.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-title">${title}</div>
+      <div class="confirm-msg">${msg}</div>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" onclick="document.getElementById('confirmDialog').remove()">Cancel</button>
+        <button class="confirm-ok" id="confirmOkBtn">Delete</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  document.getElementById('confirmOkBtn').onclick = () => {
+    el.remove();
+    onOk();
+  };
+}
+
+// ─── Toast notification ───────────────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  clearTimeout(_toastTimer);
+  t.textContent = msg;
+  t.className   = `show ${type}`;
+  _toastTimer   = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function _esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function _domId(str) {
+  return String(str).replace(/[^a-zA-Z0-9]/g,'_');
+}
+
+// Load badge count on page load
+document.addEventListener('DOMContentLoaded', () => { loadCasesCountBadge(); });
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const headerRight = document.querySelector('.header-right');
   if (headerRight) {
