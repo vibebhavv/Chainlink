@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chainlink — BTC Wallet Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    :root {
+      --bg:      #060a0f; --bg2: #0a1018; --bg3: #0f1825;
+      --border:  #1a2535; --border2: #243347;
+      --accent:  #f97316; --accent2: #fb923c;
+      --blue:    #38bdf8; --green: #34d399; --red: #f87171;
+      --amber:   #fbbf24; --purple: #a78bfa; --lime: #84cc16;
+      --muted:   #4a6278; --text: #cdd9e5; --text2: #7a94a8;
+      --mono:    'DM Mono', monospace;
+      --sans:    'Syne', sans-serif;
+      --tech:    'Share Tech Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px); pointer-events:none; z-index:999; }
+    body::after  { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(249,115,22,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(249,115,22,.025) 1px,transparent 1px); background-size:48px 48px; pointer-events:none; z-index:0; }
+
+    .app { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:28px 24px 80px; }
+
+    /* ── Header ── */
+    header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:32px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+    .logo-eyebrow { font-family:var(--tech); font-size:11px; letter-spacing:.22em; color:var(--accent); text-transform:uppercase; }
+    .logo-title   { font-family:var(--sans); font-size:38px; font-weight:800; letter-spacing:-.03em; line-height:1; color:#fff; }
+    .logo-title span { color:var(--accent); }
+    .logo-sub     { font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:4px; letter-spacing:.05em; }
+    .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+    .live-badge   { display:flex; align-items:center; gap:7px; font-family:var(--tech); font-size:11px; color:var(--muted); letter-spacing:.1em; }
+    .pulse-dot    { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(52,211,153,.4)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(52,211,153,0)} }
+
+    /* ── Search ── */
+    .search-wrap { display:flex; gap:10px; margin-bottom:10px; }
+    .input-group { flex:1; position:relative; }
+    .input-icon  { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; font-size:15px; }
+    .wallet-input { width:100%; padding:14px 14px 14px 40px; background:var(--bg3); border:1px solid var(--border2); border-radius:10px; color:var(--text); font-family:var(--mono); font-size:14px; outline:none; transition:border-color .2s,box-shadow .2s; }
+    .wallet-input::placeholder { color:var(--muted); }
+    .wallet-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(249,115,22,.1); }
+    .btn-primary   { padding:14px 24px; background:var(--accent); color:#000; font-family:var(--sans); font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; border:none; border-radius:10px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .btn-primary:hover { background:var(--accent2); box-shadow:0 0 18px rgba(249,115,22,.3); transform:translateY(-1px); }
+    .btn-secondary { padding:10px 16px; background:transparent; border:1px solid var(--border2); color:var(--text2); font-family:var(--tech); font-size:11px; letter-spacing:.06em; border-radius:8px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ── Compare row ── */
+    .compare-row { display:flex; gap:10px; margin-bottom:24px; }
+    .compare-input { flex:1; padding:9px 13px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text2); font-family:var(--mono); font-size:12px; outline:none; transition:border-color .2s; }
+    .compare-input:focus { border-color:var(--purple); }
+    .compare-input::placeholder { color:var(--muted); font-size:11px; }
+    .btn-compare { padding:9px 16px; background:transparent; border:1px solid var(--purple); color:var(--purple); font-family:var(--tech); font-size:11px; letter-spacing:.08em; border-radius:8px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .btn-compare:hover { background:rgba(167,139,250,.1); }
+
+    /* ── Tabs ── */
+    .tabs { display:flex; gap:3px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:4px; width:fit-content; margin-bottom:22px; }
+    .tab  { padding:7px 18px; border-radius:7px; font-size:12px; font-weight:600; letter-spacing:.04em; cursor:pointer; color:var(--muted); transition:all .2s; user-select:none; }
+    .tab:hover { color:var(--text); }
+    .tab.active { background:var(--accent); color:#000; }
+
+    /* ── States ── */
+    .state-empty   { text-align:center; padding:72px 20px; animation:fadeIn .4s ease; }
+    .state-empty-icon { font-size:40px; margin-bottom:16px; opacity:.2; }
+    .state-empty p { font-family:var(--mono); font-size:13px; color:var(--muted); }
+    .state-loading { display:flex; flex-direction:column; align-items:center; gap:16px; padding:72px 20px; animation:fadeIn .3s ease; }
+    .loader-ring   { width:42px; height:42px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .state-loading p { font-family:var(--tech); font-size:12px; color:var(--muted); letter-spacing:.1em; }
+    .tab-content   { display:none; }
+    .tab-content.active { display:block; animation:fadeIn .3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none} }
+
+    /* ── Cards & Metrics ── */
+    .card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:14px; }
+    .metrics-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:14px; }
+    .metric-card  { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px 20px; transition:all .2s; }
+    .metric-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+    .metric-label { font-family:var(--tech); font-size:9px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; margin-bottom:7px; }
+    .metric-value { font-family:var(--mono); font-size:22px; font-weight:500; color:#fff; letter-spacing:-.02em; }
+    .metric-unit  { font-size:11px; color:var(--muted); margin-left:3px; }
+    .metric-card.accent { border-color:rgba(249,115,22,.22); }
+    .addr-type-pill { display:inline-flex; align-items:center; font-family:var(--tech); font-size:11px; letter-spacing:.1em; padding:4px 11px; border-radius:6px; background:rgba(56,189,248,.07); color:var(--blue); border:1px solid rgba(56,189,248,.2); margin-top:4px; }
+
+    /* ── Risk panel ── */
+    .risk-panel { display:grid; grid-template-columns:auto 1fr; gap:24px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:14px; align-items:flex-start; }
+    .risk-gauge-wrap { position:relative; width:90px; height:90px; flex-shrink:0; }
+    .risk-gauge-wrap svg { width:90px; height:90px; transform:rotate(-90deg); }
+    .risk-gauge-track { fill:none; stroke:var(--border2); stroke-width:7; }
+    .risk-gauge-fill  { fill:none; stroke-width:7; stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1); }
+    .risk-gauge-label { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .risk-score-num   { font-family:var(--mono); font-size:19px; font-weight:500; color:#fff; line-height:1; }
+    .risk-score-denom { font-family:var(--tech); font-size:9px; color:var(--muted); }
+    .risk-level-badge { display:inline-flex; align-items:center; gap:6px; font-family:var(--tech); font-size:11px; letter-spacing:.14em; padding:5px 12px; border-radius:6px; margin-bottom:10px; text-transform:uppercase; }
+    .risk-level-badge.HIGH   { background:rgba(248,113,113,.1);  color:var(--red);   border:1px solid rgba(248,113,113,.22); }
+    .risk-level-badge.MEDIUM { background:rgba(251,191,36,.08);  color:var(--amber); border:1px solid rgba(251,191,36,.22); }
+    .risk-level-badge.LOW    { background:rgba(52,211,153,.07);  color:var(--green); border:1px solid rgba(52,211,153,.2); }
+    .risk-summary { font-family:var(--mono); font-size:11px; color:var(--text2); line-height:1.65; margin-bottom:12px; max-width:520px; }
+    .risk-flags   { display:flex; flex-direction:column; gap:6px; }
+    .risk-flag    { display:flex; align-items:flex-start; gap:9px; padding:8px 11px; background:var(--bg3); border-radius:8px; border:1px solid var(--border); }
+    .sev-dot      { width:6px; height:6px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+    .sev-critical { background:#f87171; } .sev-high { background:#fb923c; }
+    .sev-medium   { background:#fbbf24; } .sev-low  { background:#34d399; }
+    .risk-flag-text { flex:1; }
+    .risk-flag-label  { font-family:var(--mono); font-size:12px; color:var(--text); }
+    .risk-flag-detail { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+    .risk-flag-code   { font-family:var(--tech); font-size:10px; color:var(--muted); padding-top:1px; white-space:nowrap; }
+    .no-flags { font-family:var(--mono); font-size:12px; color:var(--green); }
+
+    /* ── Wallet card ── */
+    .wallet-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:14px 18px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .wallet-label   { font-family:var(--tech); font-size:9px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; margin-bottom:4px; }
+    .wallet-address { font-family:var(--mono); font-size:12px; color:var(--blue); word-break:break-all; }
+    .btn-copy { padding:6px 13px; background:transparent; border:1px solid var(--border2); border-radius:7px; color:var(--muted); font-family:var(--tech); font-size:10px; letter-spacing:.1em; cursor:pointer; transition:all .2s; white-space:nowrap; flex-shrink:0; }
+    .btn-copy:hover { border-color:var(--accent); color:var(--accent); }
+    .btn-copy.copied { border-color:var(--green); color:var(--green); }
+
+    /* ── Section header ── */
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .section-title  { font-family:var(--tech); font-size:10px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
+    .section-count  { font-family:var(--mono); font-size:11px; color:var(--muted); }
+
+    /* ── Pattern chips ── */
+    .pattern-chips { display:flex; flex-wrap:wrap; gap:7px; }
+    .pc { font-family:var(--tech); font-size:10px; letter-spacing:.07em; padding:3px 9px; border-radius:5px; border:1px solid; }
+    .pc-standard      { color:#7a94a8; border-color:#1a2535; background:rgba(255,255,255,.02); }
+    .pc-peel_chain    { color:#38bdf8; border-color:rgba(56,189,248,.25); background:rgba(56,189,248,.05); }
+    .pc-fan_out       { color:#fbbf24; border-color:rgba(251,191,36,.25); background:rgba(251,191,36,.05); }
+    .pc-consolidation { color:#f97316; border-color:rgba(249,115,22,.25); background:rgba(249,115,22,.05); }
+    .pc-mixing        { color:#f87171; border-color:rgba(248,113,113,.25); background:rgba(248,113,113,.07); }
+    .pc-self_transfer { color:#a78bfa; border-color:rgba(167,139,250,.25); background:rgba(167,139,250,.05); }
+    .pc-sweep         { color:#34d399; border-color:rgba(52,211,153,.25); background:rgba(52,211,153,.05); }
+
+    /* ── Profile grid ── */
+    .profile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:14px; }
+    .profile-stat { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:13px 16px; }
+    .profile-stat-label { font-family:var(--tech); font-size:9px; letter-spacing:.17em; color:var(--muted); text-transform:uppercase; margin-bottom:5px; }
+    .profile-stat-value { font-family:var(--mono); font-size:13px; color:var(--text); }
+
+    /* ── Transactions ── */
+    .tx-list { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .tx-row  { display:grid; grid-template-columns:26px 1fr 90px 110px; align-items:center; gap:12px; padding:11px 16px; border-bottom:1px solid var(--border); transition:background .15s; cursor:pointer; }
+    .tx-row:last-child { border-bottom:none; }
+    .tx-row:hover { background:var(--bg3); }
+    .tx-dir-badge { width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+    .tx-dir-badge.IN  { background:rgba(52,211,153,.1); color:var(--green); }
+    .tx-dir-badge.OUT { background:rgba(248,113,113,.1); color:var(--red); }
+    .tx-id   { font-family:var(--mono); font-size:11px; color:var(--blue); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tx-meta { font-family:var(--tech); font-size:10px; color:var(--muted); margin-top:2px; display:flex; gap:8px; align-items:center; }
+    .tx-btc  { font-family:var(--mono); font-size:12px; font-weight:500; text-align:right; }
+    .tx-btc.IN { color:var(--green); } .tx-btc.OUT { color:var(--red); }
+    .tx-fee  { font-family:var(--tech); font-size:10px; color:var(--muted); text-align:right; margin-top:2px; }
+    .tx-cp   { font-family:var(--tech); font-size:10px; color:var(--muted); text-align:right; }
+
+    /* ── UTXOs ── */
+    .utxo-list { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .utxo-row  { display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:14px; padding:10px 16px; border-bottom:1px solid var(--border); }
+    .utxo-row:last-child { border-bottom:none; }
+    .utxo-txid { font-family:var(--mono); font-size:11px; color:var(--blue); }
+    .utxo-vout { font-family:var(--tech); font-size:10px; color:var(--muted); margin-top:2px; }
+    .utxo-btc  { font-family:var(--mono); font-size:13px; color:var(--green); }
+    .utxo-badge { font-family:var(--tech); font-size:10px; padding:2px 8px; border-radius:5px; }
+    .utxo-badge.confirmed   { background:rgba(52,211,153,.1); color:var(--green); }
+    .utxo-badge.unconfirmed { background:rgba(251,191,36,.1); color:var(--amber); }
+
+    /* ── Counterparties table ── */
+    .cp-table { width:100%; border-collapse:collapse; }
+    .cp-table th { font-family:var(--tech); font-size:9px; letter-spacing:.15em; color:var(--muted); text-align:left; padding:7px 10px; border-bottom:1px solid var(--border); }
+    .cp-table td { font-family:var(--mono); font-size:11px; padding:8px 10px; border-bottom:1px solid var(--border); color:var(--text2); }
+    .cp-table tr:last-child td { border-bottom:none; }
+    .cp-table tr:hover td { background:var(--bg3); cursor:pointer; }
+    .cp-addr { color:var(--blue) !important; }
+
+    /* ── Graph tab ── */
+    .graph-outer { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+
+    /* Toolbar row 1: controls */
+    .graph-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 18px; border-bottom:1px solid var(--border); background:var(--bg3); }
+    .graph-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .depth-select { background:var(--bg2); border:1px solid var(--border2); color:var(--text2); font-family:var(--tech); font-size:11px; padding:6px 10px; border-radius:7px; outline:none; cursor:pointer; }
+    .graph-btn { padding:6px 12px; background:transparent; border:1px solid var(--border2); color:var(--muted); font-family:var(--tech); font-size:10px; letter-spacing:.06em; border-radius:6px; cursor:pointer; transition:all .15s; }
+    .graph-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .graph-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(249,115,22,.08); }
+    .graph-legend { display:flex; gap:14px; font-family:var(--tech); font-size:10px; color:var(--muted); letter-spacing:.06em; flex-wrap:wrap; }
+    .legend-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+
+    /* Stats bar */
+    .graph-stats { display:flex; gap:18px; padding:8px 18px; background:var(--bg3); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .graph-stat  { font-family:var(--tech); font-size:10px; color:var(--muted); letter-spacing:.06em; }
+    .graph-stat span { color:var(--text); margin-left:4px; }
+
+    /* Main canvas area */
+    .graph-body { display:flex; height:660px; }
+    #graph-canvas { flex:1; background:var(--bg); min-width:0; }
+
+    /* Node info sidebar */
+    #node-panel {
+      width:260px; flex-shrink:0; background:var(--bg3);
+      border-left:1px solid var(--border); padding:16px;
+      display:none; overflow-y:auto; flex-direction:column; gap:10px;
+    }
+    #node-panel.visible { display:flex; }
+    .np-title  { font-family:var(--tech); font-size:10px; letter-spacing:.18em; color:var(--muted); text-transform:uppercase; margin-bottom:8px; }
+    .np-addr   { font-family:var(--mono); font-size:11px; color:var(--blue); word-break:break-all; margin-bottom:12px; }
+    .np-row    { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:11px; }
+    .np-row:last-child { border-bottom:none; }
+    .np-row-label { color:var(--muted); }
+    .np-actions { display:flex; flex-direction:column; gap:7px; margin-top:10px; }
+    .np-btn { padding:8px 12px; background:transparent; border:1px solid var(--border2); border-radius:8px; color:var(--text2); font-family:var(--tech); font-size:10px; letter-spacing:.06em; cursor:pointer; transition:all .2s; }
+    .np-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .np-btn.primary { border-color:var(--accent); color:var(--accent); }
+
+    /* Search overlay */
+    .graph-search-wrap { position:relative; }
+    .graph-search { padding:6px 10px 6px 28px; background:var(--bg2); border:1px solid var(--border2); border-radius:7px; color:var(--text); font-family:var(--mono); font-size:11px; outline:none; width:180px; transition:border-color .2s; }
+    .graph-search:focus { border-color:var(--accent); }
+    .graph-search::placeholder { color:var(--muted); }
+    .graph-search-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:12px; pointer-events:none; }
+
+    /* ── Compare ── */
+    .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .cw-card  { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:18px; }
+    .cw-label { font-family:var(--tech); font-size:9px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; margin-bottom:7px; }
+    .cw-addr  { font-family:var(--mono); font-size:11px; color:var(--blue); word-break:break-all; margin-bottom:12px; }
+    .cw-row   { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-family:var(--mono); font-size:12px; }
+    .cw-row:last-child { border-bottom:none; }
+    .cw-row-label { color:var(--muted); }
+    .link-banner { padding:11px 16px; border-radius:8px; font-family:var(--mono); font-size:12px; margin-bottom:12px; }
+    .link-banner.yes { background:rgba(248,113,113,.07); border:1px solid rgba(248,113,113,.22); color:var(--red); }
+    .link-banner.no  { background:rgba(52,211,153,.05);  border:1px solid rgba(52,211,153,.18); color:var(--green); }
+
+    /* ── Error ── */
+    .error-box { display:flex; align-items:center; gap:11px; background:rgba(248,113,113,.07); border:1px solid rgba(248,113,113,.2); border-radius:10px; padding:13px 17px; font-family:var(--mono); font-size:13px; color:var(--red); }
+
+    /* ── Crypto chain selector ── */
+    .chain-selector { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+    .chain-btn { display:flex; align-items:center; gap:6px; padding:7px 13px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:var(--tech); font-size:11px; letter-spacing:.06em; cursor:pointer; transition:all .2s; user-select:none; }
+    .chain-btn:hover { border-color:var(--border2); color:var(--text); }
+    .chain-btn.active { color:#000; font-weight:600; }
+    .chain-btn .chain-icon { font-size:14px; line-height:1; }
+    .chain-btc.active  { background:#f7931a; border-color:#f7931a; color:#000; }
+    .chain-eth.active  { background:#627eea; border-color:#627eea; color:#fff; }
+    .chain-ltc.active  { background:#bfbbbb; border-color:#bfbbbb; color:#000; }
+    .chain-sol.active  { background:#9945ff; border-color:#9945ff; color:#fff; }
+    .chain-xrp.active  { background:#346aa9; border-color:#346aa9; color:#fff; }
+    .chain-badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--tech); font-size:10px; letter-spacing:.1em; padding:3px 9px; border-radius:5px; background:rgba(249,115,22,.1); color:var(--accent); border:1px solid rgba(249,115,22,.2); }
+
+    /* ── Address dropdown / saved addresses ── */
+    .addr-input-wrap { position:relative; flex:1; }
+    .addr-dropdown-btn { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px; transition:color .2s; line-height:1; }
+    .addr-dropdown-btn:hover { color:var(--accent); }
+    .addr-dropdown { position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; z-index:200; box-shadow:0 12px 40px rgba(0,0,0,.5); overflow:hidden; animation:fadeIn .15s ease; }
+    .addr-dropdown-header { display:flex; align-items:center; justify-content:space-between; padding:9px 13px; border-bottom:1px solid var(--border); }
+    .addr-dropdown-title { font-family:var(--tech); font-size:10px; letter-spacing:.15em; color:var(--muted); }
+    .addr-dropdown-clear { font-family:var(--tech); font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; padding:0; }
+    .addr-dropdown-clear:hover { color:var(--red); }
+    .addr-dropdown-item { display:flex; align-items:center; gap:10px; padding:9px 13px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .15s; }
+    .addr-dropdown-item:last-child { border-bottom:none; }
+    .addr-dropdown-item:hover { background:var(--bg3); }
+    .addr-item-chain { font-family:var(--tech); font-size:9px; letter-spacing:.1em; padding:2px 6px; border-radius:4px; flex-shrink:0; }
+    .addr-item-addr { font-family:var(--mono); font-size:11px; color:var(--blue); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .addr-item-label { font-family:var(--tech); font-size:10px; color:var(--muted); max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .addr-item-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:0 2px; flex-shrink:0; }
+    .addr-item-del:hover { color:var(--red); }
+    .addr-dropdown-empty { padding:14px; font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; }
+    .addr-save-row { display:flex; align-items:center; gap:8px; padding:9px 13px; border-top:1px solid var(--border); background:rgba(249,115,22,.03); }
+    .addr-save-input { flex:1; background:transparent; border:none; outline:none; font-family:var(--mono); font-size:11px; color:var(--text); }
+    .addr-save-input::placeholder { color:var(--muted); }
+    .addr-save-btn { font-family:var(--tech); font-size:10px; color:var(--accent); background:none; border:1px solid rgba(249,115,22,.3); border-radius:5px; padding:4px 9px; cursor:pointer; white-space:nowrap; }
+    .addr-save-btn:hover { background:rgba(249,115,22,.1); }
+
+    /* ── Graph fullscreen ── */
+    .graph-fullscreen-overlay { position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; animation:fadeIn .2s ease; }
+    .graph-fullscreen-overlay .graph-outer { flex:1; display:flex; flex-direction:column; border-radius:0; border:none; overflow:hidden; }
+    .graph-fullscreen-overlay .graph-body  { flex:1; height:auto !important; }
+    .graph-fullscreen-overlay #graph-canvas { height:100% !important; }
+    .fs-topbar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:var(--bg3); border-bottom:1px solid var(--border); flex-shrink:0; }
+    .fs-title { font-family:var(--tech); font-size:11px; letter-spacing:.15em; color:var(--muted); }
+    .fs-close { background:none; border:1px solid var(--border2); color:var(--muted); font-family:var(--tech); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:7px; cursor:pointer; transition:all .2s; }
+    .fs-close:hover { border-color:var(--red); color:var(--red); }
+
+    @media(max-width:720px) {
+      .risk-panel { grid-template-columns:1fr; }
+      .compare-grid { grid-template-columns:1fr; }
+      .tx-row { grid-template-columns:24px 1fr auto; }
+      .graph-body { flex-direction:column; height:auto; }
+      #graph-canvas { height:420px; }
+      #node-panel { width:100%; border-left:none; border-top:1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo">
+      <div class="logo-eyebrow">Crypto Intelligence</div>
+      <div class="logo-title">Chain<span>link</span></div>
+      <div class="logo-sub">// OSINT · WALLET ANALYSIS · RISK ENGINE v1.0</div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="pulse-dot"></div> LIVE · BLOCKSTREAM API</div>
+    </div>
+  </header>
+
+  <!-- Chain selector -->
+  <div class="chain-selector" id="chainSelector">
+    <button class="chain-btn chain-btc active" data-chain="BTC" onclick="selectChain('BTC',this)">
+      <span class="chain-icon">₿</span> Bitcoin
+    </button>
+    <button class="chain-btn chain-eth" data-chain="ETH" onclick="selectChain('ETH',this)">
+      <span class="chain-icon">Ξ</span> Ethereum
+    </button>
+    <button class="chain-btn chain-ltc" data-chain="LTC" onclick="selectChain('LTC',this)">
+      <span class="chain-icon">Ł</span> Litecoin
+    </button>
+    <button class="chain-btn chain-sol" data-chain="SOL" onclick="selectChain('SOL',this)">
+      <span class="chain-icon">◎</span> Solana
+    </button>
+    <button class="chain-btn chain-xrp" data-chain="XRP" onclick="selectChain('XRP',this)">
+      <span class="chain-icon">✕</span> XRP
+    </button>
+  </div>
+
+  <div class="search-wrap">
+    <div class="addr-input-wrap">
+      <span class="input-icon">⬡</span>
+      <input class="wallet-input" id="walletInput" type="text"
+        placeholder="Enter Bitcoin wallet address  e.g. bc1q…"
+        onkeydown="if(event.key==='Enter') lookupWallet()"
+        autocomplete="off" spellcheck="false" style="padding-right:38px">
+      <button class="addr-dropdown-btn" id="addrDropdownBtn" onclick="toggleAddrDropdown(event)" title="Saved addresses">▾</button>
+      <!-- Address dropdown -->
+      <div class="addr-dropdown" id="addrDropdown" style="display:none">
+        <div class="addr-dropdown-header">
+          <span class="addr-dropdown-title">SAVED ADDRESSES</span>
+          <button class="addr-dropdown-clear" onclick="clearAllSaved()">Clear all</button>
+        </div>
+        <div id="savedAddrList"></div>
+        <div class="addr-save-row">
+          <input class="addr-save-input" id="addrLabelInput" placeholder="Label (optional)" maxlength="24">
+          <button class="addr-save-btn" onclick="saveCurrentAddress()">+ Save current</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="lookupWallet()">Analyze</button>
+  </div>
+
+  <div class="compare-row">
+    <input class="compare-input" id="compareA" placeholder="Wallet A (auto-filled)" spellcheck="false">
+    <input class="compare-input" id="compareB" placeholder="Wallet B to compare against…" spellcheck="false">
+    <button class="btn-compare" onclick="runCompare()">⇄ Compare</button>
+  </div>
+
+  <div class="tabs" id="tabsEl" style="display:none">
+    <div class="tab active" id="tabOverview" onclick="switchTab('overview')">Overview</div>
+    <div class="tab"        id="tabProfile"  onclick="switchTab('profile')">Profile</div>
+    <div class="tab"        id="tabTxns"     onclick="switchTab('txns')">Transactions</div>
+    <div class="tab"        id="tabUtxos"    onclick="switchTab('utxos')">UTXOs</div>
+    <div class="tab"        id="tabGraph"    onclick="switchTab('graph')">Graph</div>
+    <div class="tab"        id="tabCompare"  onclick="switchTab('compare')">Compare</div>
+  </div>
+
+  <div id="content">
+    <div class="state-empty">
+      <div class="state-empty-icon">⬡</div>
+      <p>Enter a Bitcoin wallet address above to begin investigation</p>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let currentData    = null;
+let currentAddr    = '';
+let graphNetwork   = null;
+let graphNodes     = null;
+let graphEdges     = null;
+let physicsEnabled = true;
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const cap = name.charAt(0).toUpperCase() + name.slice(1);
+  document.getElementById('tab' + cap)?.classList.add('active');
+  document.getElementById('tab-' + name)?.classList.add('active');
+
+  if (name === 'graph'  && currentAddr) setTimeout(loadGraph, 60);
+  if (name === 'utxos'  && currentAddr) loadUtxos();
+}
+
+// ─── Main lookup ──────────────────────────────────────────────────────────────
+async function lookupWallet() {
+  const addr = document.getElementById('walletInput').value.trim();
+  if (!addr) return;
+  currentAddr = addr;
+  document.getElementById('compareA').value = addr;
+  document.getElementById('tabsEl').style.display = 'none';
+  graphNetwork = null;
+
+  // For non-BTC chains, show a "coming soon" message with explorer link
+  if (currentChain !== 'BTC') {
+    const cfg = CHAIN_CONFIG[currentChain];
+    setLoading(`LOOKING UP ${cfg.name.toUpperCase()} ADDRESS…`);
+    await new Promise(r => setTimeout(r, 800));
+    document.getElementById('content').innerHTML = `
+      <div class="card" style="margin-top:8px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="font-size:28px">${currentChain==='ETH'?'Ξ':currentChain==='SOL'?'◎':currentChain==='LTC'?'Ł':'✕'}</div>
+          <div>
+            <div style="font-family:var(--tech);font-size:10px;letter-spacing:.15em;color:var(--muted);margin-bottom:4px">${cfg.name.toUpperCase()} WALLET</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--blue)">${addr}</div>
+          </div>
+        </div>
+        <div class="error-box" style="margin-bottom:14px;background:rgba(251,191,36,.05);border-color:rgba(251,191,36,.2);color:var(--amber)">
+          ⚡ ${cfg.name} chain support requires additional backend configuration.
+        </div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px">
+          ${cfg.note}<br><br>
+          In the meantime, you can view this address on a block explorer:
+        </div>
+        <a href="${cfg.explorer}${addr}" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--blue);font-family:var(--tech);font-size:11px;text-decoration:none;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border2)'">
+          ↗ View on ${cfg.name} Explorer
+        </a>
+      </div>`;
+    document.getElementById('tabsEl').style.display = 'none';
+    return;
+  }
+
+  setLoading('ANALYZING BLOCKCHAIN ACTIVITY…');
+
+  try {
+    const res  = await fetch(`${API}/wallet/${addr}?max_txs=100`);
+    const data = await res.json();
+    if (data.detail || data.error) { showError(data.detail || data.error); return; }
+    currentData = data;
+    document.getElementById('tabsEl').style.display = 'flex';
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tabOverview').classList.add('active');
+    renderAll(data);
+  } catch(e) {
+    showError('Could not connect to backend. Is the server running at port 8000?');
+  }
+}
+
+function setLoading(msg) {
+  document.getElementById('content').innerHTML =
+    `<div class="state-loading"><div class="loader-ring"></div><p>${msg}</p></div>`;
+}
+function showError(msg) {
+  document.getElementById('content').innerHTML =
+    `<div class="error-box">✕ &nbsp;${msg}</div>`;
+}
+
+// ─── Render all tab shells ────────────────────────────────────────────────────
+function renderAll(data) {
+  const risk    = data.risk_analysis;
+  const profile = data.profile || {};
+  const circum  = 2 * Math.PI * 36;
+  const offset  = circum - (risk.score / 100) * circum;
+  const gc      = risk.level === 'HIGH' ? '#f87171' : risk.level === 'MEDIUM' ? '#fbbf24' : '#34d399';
+
+  const patternChips = Object.entries(profile.pattern_breakdown || {})
+    .sort((a,b) => b[1]-a[1])
+    .map(([p,c]) => `<span class="pc pc-${p}">${p.replace(/_/g,' ')} ×${c}</span>`)
+    .join('');
+
+  const flags = risk.flags || [];
+  const flagsHtml = flags.length
+    ? flags.map(f => `
+        <div class="risk-flag">
+          <div class="sev-dot sev-${f.severity}"></div>
+          <div class="risk-flag-text">
+            <div class="risk-flag-label">${f.label}</div>
+            <div class="risk-flag-detail">${f.detail || ''}</div>
+          </div>
+          <div class="risk-flag-code">${f.code}</div>
+        </div>`).join('')
+    : `<div class="no-flags">✓ No risk indicators detected</div>`;
+
+  const txRows = (data.transactions || []).map(tx => {
+    const isIn = tx.direction === 'INCOMING';
+    const dir  = isIn ? 'IN' : 'OUT';
+    const btc  = isIn ? tx.incoming_btc : tx.outgoing_btc;
+    const pct  = `pc-${tx.pattern}`;
+    return `
+      <div class="tx-row" onclick="copyText('${tx.txid}',event)" title="Click to copy TXID">
+        <div class="tx-dir-badge ${dir}">${isIn?'↓':'↑'}</div>
+        <div>
+          <div class="tx-id">${tx.txid}</div>
+          <div class="tx-meta">
+            <span>${tx.timestamp}</span>
+            <span class="pc ${pct}" style="padding:1px 6px;font-size:9px">${(tx.pattern||'').replace(/_/g,' ')}</span>
+            ${tx.confirmed===false?'<span style="color:var(--amber)">UNCONFIRMED</span>':''}
+          </div>
+        </div>
+        <div class="tx-cp">${(tx.counterparties||[]).length} cp</div>
+        <div>
+          <div class="tx-btc ${dir}">${isIn?'+':'−'}${btc.toFixed(8)}</div>
+          <div class="tx-fee">fee ${tx.fee_btc.toFixed(8)}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const topCPs = profile.top_counterparties || [];
+  const cpRows = topCPs.map(cp => `
+    <tr onclick="setWallet('${cp.address}')">
+      <td class="cp-addr">${cp.address}</td>
+      <td style="text-align:right">${cp.interactions}</td>
+      <td style="text-align:right;color:var(--text)">${cp.volume_btc} BTC</td>
+    </tr>`).join('');
+
+  document.getElementById('content').innerHTML = `
+
+    <!-- OVERVIEW -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="metrics-grid">
+        <div class="metric-card accent"><div class="metric-label">Balance</div>
+          <div class="metric-value">${data.balance_btc.toFixed(6)}<span class="metric-unit">BTC</span></div></div>
+        <div class="metric-card"><div class="metric-label">Total Received</div>
+          <div class="metric-value">${data.total_received_btc.toFixed(6)}<span class="metric-unit">BTC</span></div></div>
+        <div class="metric-card"><div class="metric-label">Total Sent</div>
+          <div class="metric-value">${data.total_sent_btc.toFixed(6)}<span class="metric-unit">BTC</span></div></div>
+        <div class="metric-card"><div class="metric-label">Transactions</div>
+          <div class="metric-value">${data.transaction_count}</div></div>
+        <div class="metric-card" style="border-color:rgba(56,189,248,.2)">
+          <div class="metric-label">Address Type</div>
+          <div><span class="addr-type-pill">${data.address_type||'Unknown'}</span></div></div>
+      </div>
+
+      <div class="risk-panel">
+        <div class="risk-gauge-wrap">
+          <svg viewBox="0 0 90 90"><circle class="risk-gauge-track" cx="45" cy="45" r="36"/>
+            <circle class="risk-gauge-fill" cx="45" cy="45" r="36" stroke="${gc}"
+              stroke-dasharray="${circum}" stroke-dashoffset="${offset}"/></svg>
+          <div class="risk-gauge-label">
+            <div class="risk-score-num">${risk.score}</div>
+            <div class="risk-score-denom">/100</div>
+          </div>
+        </div>
+        <div>
+          <div class="risk-level-badge ${risk.level}">● ${risk.level} RISK</div>
+          <div class="risk-summary">${risk.summary||''}</div>
+          <div class="risk-flags">${flagsHtml}</div>
+        </div>
+      </div>
+
+      <div class="wallet-card">
+        <div>
+          <div class="wallet-label">Target Wallet</div>
+          <div class="wallet-address">${data.wallet}</div>
+        </div>
+        <button class="btn-copy" id="copyAddrBtn" onclick="copyAddress('${data.wallet}')">COPY</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="tab-content" id="tab-profile">
+      <div class="profile-grid">
+        <div class="profile-stat"><div class="profile-stat-label">First Seen</div>
+          <div class="profile-stat-value">${profile.first_seen||'—'}</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">Last Active</div>
+          <div class="profile-stat-value">${profile.last_seen||'—'}</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">Velocity</div>
+          <div class="profile-stat-value">${profile.velocity_per_day!=null?profile.velocity_per_day+' tx/day':'—'}</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">Avg Tx Size</div>
+          <div class="profile-stat-value">${profile.avg_tx_size_btc||0} BTC</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">Unique Counterparties</div>
+          <div class="profile-stat-value">${profile.unique_counterparties||0}</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">Total Fees</div>
+          <div class="profile-stat-value">${profile.total_fees_btc||0} BTC</div></div>
+        <div class="profile-stat"><div class="profile-stat-label">In / Out</div>
+          <div class="profile-stat-value">${profile.incoming_count||0} in · ${profile.outgoing_count||0} out</div></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px">Transaction Patterns</div>
+        <div class="pattern-chips">${patternChips||'<span style="font-family:var(--mono);font-size:12px;color:var(--muted)">No data</span>'}</div>
+      </div>
+      ${topCPs.length ? `
+      <div class="card">
+        <div class="section-header"><div class="section-title">Top Counterparties</div><div class="section-count">${topCPs.length} shown</div></div>
+        <table class="cp-table">
+          <thead><tr><th>Address</th><th style="text-align:right">Interactions</th><th style="text-align:right">Volume</th></tr></thead>
+          <tbody>${cpRows}</tbody>
+        </table>
+      </div>` : ''}
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="tab-content" id="tab-txns">
+      <div class="section-header"><div class="section-title">Transactions</div><div class="section-count">${(data.transactions||[]).length} records</div></div>
+      <div class="tx-list">${txRows||'<div style="padding:20px 16px;font-family:var(--mono);font-size:12px;color:var(--muted)">No transactions found.</div>'}</div>
+    </div>
+
+    <!-- UTXOs -->
+    <div class="tab-content" id="tab-utxos">
+      <div id="utxos-content">
+        <div class="state-loading" style="padding:40px"><div class="loader-ring"></div><p>FETCHING UTXOS…</p></div>
+      </div>
+    </div>
+
+    <!-- GRAPH — full layout built here so canvas has real dimensions -->
+    <div class="tab-content" id="tab-graph">
+      <div class="graph-outer">
+
+        <!-- Toolbar -->
+        <div class="graph-toolbar">
+          <div class="graph-controls">
+            <select class="depth-select" id="hopDepth" onchange="">
+              <option value="1">Depth 1 — Direct</option>
+              <option value="2" selected>Depth 2 — Extended</option>
+              <option value="3">Depth 3 — Deep (slow)</option>
+            </select>
+            <button class="graph-btn" onclick="loadGraph()">↺ Reload</button>
+            <button class="graph-btn" onclick="graphFit()" title="Fit all nodes">⊡ Fit</button>
+            <button class="graph-btn" onclick="graphZoom(1.3)">＋</button>
+            <button class="graph-btn" onclick="graphZoom(0.77)">－</button>
+            <button class="graph-btn" id="physicsBtn" onclick="togglePhysics()">⚡ Physics</button>
+            <button class="graph-btn" onclick="openGraphFullscreen()" title="Fullscreen">⛶ Fullscreen</button>
+            <button class="graph-btn" onclick="openGraphNewTab()" title="Open in new tab">↗ New Tab</button>
+            <div class="graph-search-wrap">
+              <span class="graph-search-icon">⌕</span>
+              <input class="graph-search" id="graphSearch" placeholder="Search address…"
+                oninput="searchGraph(this.value)" autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+          <div class="graph-legend">
+            <span><span class="legend-dot" style="background:#ef4444"></span>TARGET</span>
+            <span><span class="legend-dot" style="background:#38bdf8"></span>CONNECTED</span>
+            <span><span class="legend-dot" style="background:#84cc16"></span>EXCHANGE</span>
+            <span><span class="legend-dot" style="background:#f87171"></span>RISK</span>
+          </div>
+        </div>
+
+        <!-- Stats bar (hidden until graph loads) -->
+        <div class="graph-stats" id="graphStats" style="display:none"></div>
+
+        <!-- Canvas + node panel -->
+        <div class="graph-body">
+          <div id="graph-canvas">
+            <div class="state-loading" style="padding:60px">
+              <div class="loader-ring"></div>
+              <p>BUILDING NETWORK GRAPH…</p>
+            </div>
+          </div>
+          <div id="node-panel">
+            <div class="np-title">Node Info</div>
+            <div id="np-addr" class="np-addr">—</div>
+            <div id="np-rows"></div>
+            <div class="np-actions">
+              <button class="np-btn primary" id="np-analyze" onclick="">Analyze this wallet →</button>
+              <button class="np-btn" id="np-copy" onclick="">Copy address</button>
+              <button class="np-btn" onclick="closeNodePanel()">✕ Close</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div class="tab-content" id="tab-compare">
+      <div id="compare-content">
+        <div class="state-empty" style="padding:40px">
+          <p>Enter two wallet addresses in the compare fields above, then click ⇄ Compare</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Graph loading — called when tab becomes visible ──────────────────────────
+async function loadGraph() {
+  if (!currentAddr) return;
+
+  // Reset node panel
+  closeNodePanel();
+
+  const canvas  = document.getElementById('graph-canvas');
+  const statsEl = document.getElementById('graphStats');
+  if (!canvas) return;
+
+  // Show spinner inside the already-visible canvas div
+  canvas.innerHTML = `<div class="state-loading" style="padding:60px"><div class="loader-ring"></div><p>BUILDING NETWORK GRAPH…</p></div>`;
+  if (statsEl) statsEl.style.display = 'none';
+  if (graphNetwork) { graphNetwork.destroy(); graphNetwork = null; }
+
+  const depth = parseInt(document.getElementById('hopDepth')?.value || '2');
+  const url   = depth > 1
+    ? `${API}/wallet/${currentAddr}/hops?depth=${depth}&max_nodes=80&max_txs=50`
+    : `${API}/wallet/${currentAddr}/graph?max_nodes=60`;
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    if (data.detail) { canvas.innerHTML = `<div class="error-box" style="margin:20px">✕ ${data.detail}</div>`; return; }
+
+    // Stats bar
+    if (statsEl && data.stats) {
+      const s = data.stats;
+      statsEl.style.display = 'flex';
+      statsEl.innerHTML = [
+        `<div class="graph-stat">Nodes <span>${s.node_count}</span></div>`,
+        `<div class="graph-stat">Edges <span>${s.edge_count}</span></div>`,
+        s.density    != null ? `<div class="graph-stat">Density <span>${s.density}</span></div>` : '',
+        s.avg_degree != null ? `<div class="graph-stat">Avg Degree <span>${s.avg_degree}</span></div>` : '',
+        s.clusters   != null ? `<div class="graph-stat">Clusters <span>${s.clusters}</span></div>` : '',
+        depth > 1 ? `<div class="graph-stat">Depth <span>${depth} hops</span></div>` : '',
+        s.hub_nodes?.length  ? `<div class="graph-stat">Top Hub <span>${s.hub_nodes[0].address.slice(0,10)}…</span></div>` : '',
+      ].join('');
+    }
+
+    // Clear canvas and render network
+    canvas.innerHTML = '';
+
+    graphNodes = new vis.DataSet(data.nodes);
+    graphEdges = new vis.DataSet(data.edges);
+
+    graphNetwork = new vis.Network(canvas, { nodes: graphNodes, edges: graphEdges }, {
+      physics: {
+        enabled: physicsEnabled,
+        barnesHut: { gravitationalConstant: -3500, springLength: 200, springConstant: 0.025, damping: 0.12 },
+        stabilization: { iterations: 150, fit: true },
+      },
+      interaction: {
+        hover: true,
+        zoomView: true,
+        dragView: true,
+        keyboard: { enabled: true, speed: { x: 10, y: 10, zoom: 0.02 } },
+        tooltipDelay: 100,
+        multiselect: false,
+      },
+      nodes:  { borderWidth: 1.5, shadow: { enabled: true, size: 6, color: 'rgba(0,0,0,0.4)' } },
+      edges:  { smooth: { type: 'dynamic' }, shadow: false },
+      layout: { improvedLayout: true },
+    });
+
+    // Click: show node panel
+    graphNetwork.on('click', params => {
+      if (params.nodes.length > 0) {
+        showNodePanel(params.nodes[0], data.nodes);
+      } else {
+        closeNodePanel();
+      }
+    });
+
+    // Double-click: analyze the clicked wallet
+    graphNetwork.on('doubleClick', params => {
+      if (params.nodes.length > 0 && params.nodes[0] !== currentAddr) {
+        setWallet(params.nodes[0]);
+      }
+    });
+
+    // After stabilisation, disable physics to save CPU
+    graphNetwork.once('stabilizationIterationsDone', () => {
+      if (physicsEnabled) {
+        graphNetwork.setOptions({ physics: { enabled: false } });
+        physicsEnabled = false;
+        document.getElementById('physicsBtn')?.classList.remove('active');
+      }
+    });
+
+  } catch(e) {
+    if (canvas) canvas.innerHTML = `<div class="error-box" style="margin:20px">✕ Failed to load graph data. Check console for details.</div>`;
+    console.error('Graph load error:', e);
+  }
+}
+
+// ─── Graph controls ───────────────────────────────────────────────────────────
+function graphFit() {
+  graphNetwork?.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+}
+
+function graphZoom(factor) {
+  if (!graphNetwork) return;
+  const scale = graphNetwork.getScale() * factor;
+  graphNetwork.moveTo({ scale, animation: { duration: 300, easingFunction: 'easeInOutQuad' } });
+}
+
+function togglePhysics() {
+  if (!graphNetwork) return;
+  physicsEnabled = !physicsEnabled;
+  graphNetwork.setOptions({ physics: { enabled: physicsEnabled } });
+  const btn = document.getElementById('physicsBtn');
+  if (btn) btn.classList.toggle('active', physicsEnabled);
+}
+
+function searchGraph(query) {
+  if (!graphNetwork || !graphNodes) return;
+  const q = query.trim().toLowerCase();
+
+  if (!q) {
+    // Reset all nodes to original appearance
+    const updates = graphNodes.get().map(n => ({ id: n.id, opacity: 1 }));
+    graphNodes.update(updates);
+    graphNetwork.unselectAll();
+    return;
+  }
+
+  const all  = graphNodes.get();
+  const hits = all.filter(n => n.id.toLowerCase().includes(q));
+
+  if (hits.length > 0) {
+    graphNetwork.selectNodes(hits.map(n => n.id));
+    graphNetwork.fit({
+      nodes: hits.map(n => n.id),
+      animation: { duration: 500, easingFunction: 'easeInOutQuad' },
+    });
+  }
+}
+
+// ─── Node info panel ──────────────────────────────────────────────────────────
+function showNodePanel(nodeId, allNodes) {
+  const node = allNodes.find(n => n.id === nodeId);
+  if (!node) return;
+
+  const panel  = document.getElementById('node-panel');
+  const addrEl = document.getElementById('np-addr');
+  const rowsEl = document.getElementById('np-rows');
+  const btnAnalyze = document.getElementById('np-analyze');
+  const btnCopy    = document.getElementById('np-copy');
+
+  if (!panel) return;
+
+  const meta = node.metadata || {};
+  addrEl.textContent = nodeId;
+
+  const rows = [
+    { label: 'Type',         value: meta.tag && meta.tag !== 'Unknown' ? meta.tag : (meta.type || '—') },
+    { label: 'Interactions', value: meta.interactions || 0 },
+    { label: 'Volume',       value: (meta.volume_btc || 0) + ' BTC' },
+    { label: 'Cluster',      value: node.cluster != null ? node.cluster : '—' },
+  ];
+
+  rowsEl.innerHTML = rows.map(r =>
+    `<div class="np-row"><span class="np-row-label">${r.label}</span><span>${r.value}</span></div>`
+  ).join('');
+
+  btnAnalyze.onclick = () => setWallet(nodeId);
+  btnCopy.onclick    = () => navigator.clipboard.writeText(nodeId);
+
+  // Disable analyze button for the target itself
+  btnAnalyze.disabled = nodeId === currentAddr;
+  btnAnalyze.style.opacity = nodeId === currentAddr ? '0.4' : '1';
+
+  panel.classList.add('visible');
+
+  // Highlight selected node
+  graphNetwork?.selectNodes([nodeId]);
+}
+
+function closeNodePanel() {
+  document.getElementById('node-panel')?.classList.remove('visible');
+  graphNetwork?.unselectAll();
+}
+
+// ─── Load UTXOs ───────────────────────────────────────────────────────────────
+async function loadUtxos() {
+  const el = document.getElementById('utxos-content');
+  if (!el || !currentAddr) return;
+  el.innerHTML = `<div class="state-loading" style="padding:40px"><div class="loader-ring"></div><p>FETCHING UTXOS…</p></div>`;
+  try {
+    const res  = await fetch(`${API}/wallet/${currentAddr}/utxos`);
+    const data = await res.json();
+    const rows = (data.utxos||[]).map(u => `
+      <div class="utxo-row">
+        <div>
+          <div class="utxo-txid">${u.txid}</div>
+          <div class="utxo-vout">vout:${u.vout}${u.block_height?' · block '+u.block_height:''}</div>
+        </div>
+        <div class="utxo-btc">+${u.value_btc} BTC</div>
+        <div class="utxo-badge ${u.confirmed?'confirmed':'unconfirmed'}">${u.confirmed?'CONFIRMED':'MEMPOOL'}</div>
+      </div>`).join('');
+    el.innerHTML = `
+      <div class="section-header" style="margin-bottom:10px">
+        <div class="section-title">Unspent Outputs</div>
+        <div class="section-count">${data.utxo_count} UTXOs · ${data.total_btc} BTC</div>
+      </div>
+      <div class="utxo-list">${rows||'<div style="padding:20px;font-family:var(--mono);font-size:12px;color:var(--muted)">No UTXOs found.</div>'}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="error-box">✕ Failed to load UTXOs</div>`;
+  }
+}
+
+// ─── Compare wallets ──────────────────────────────────────────────────────────
+async function runCompare() {
+  const a = document.getElementById('compareA').value.trim();
+  const b = document.getElementById('compareB').value.trim();
+  if (!a || !b) { alert('Enter both wallet addresses to compare.'); return; }
+
+  document.getElementById('tabsEl').style.display = 'flex';
+  switchTab('compare');
+  const el = document.getElementById('compare-content');
+  el.innerHTML = `<div class="state-loading" style="padding:40px"><div class="loader-ring"></div><p>COMPARING WALLETS…</p></div>`;
+
+  try {
+    const res  = await fetch(`${API}/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+    const data = await res.json();
+    if (data.detail) { el.innerHTML = `<div class="error-box">✕ ${data.detail}</div>`; return; }
+
+    const wa = data.wallet_a, wb = data.wallet_b;
+    const card = (w, label) => `
+      <div class="cw-card">
+        <div class="cw-label">${label}</div>
+        <div class="cw-addr">${w.address}</div>
+        <div class="cw-row"><span class="cw-row-label">Type</span><span>${w.address_type}</span></div>
+        <div class="cw-row"><span class="cw-row-label">Balance</span><span>${w.balance_btc} BTC</span></div>
+        <div class="cw-row"><span class="cw-row-label">Received</span><span>${w.total_received} BTC</span></div>
+        <div class="cw-row"><span class="cw-row-label">Sent</span><span>${w.total_sent} BTC</span></div>
+        <div class="cw-row"><span class="cw-row-label">Tx Count</span><span>${w.tx_count}</span></div>
+        <div class="cw-row"><span class="cw-row-label">Velocity</span><span>${w.velocity_per_day!=null?w.velocity_per_day+' tx/day':'—'}</span></div>
+        <div class="cw-row"><span class="cw-row-label">First Seen</span><span>${w.first_seen||'—'}</span></div>
+        <div class="cw-row"><span class="cw-row-label">Last Active</span><span>${w.last_seen||'—'}</span></div>
+        <div class="cw-row"><span class="cw-row-label">Risk</span>
+          <span class="risk-level-badge ${w.risk_level}" style="padding:2px 9px;margin:0;font-size:11px">${w.risk_level} · ${w.risk_score}/100</span></div>
+      </div>`;
+
+    const shared = data.shared_counterparties || [];
+    const sharedHtml = shared.length
+      ? shared.map(addr => `<div style="font-family:var(--mono);font-size:11px;color:var(--blue);padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="setWallet('${addr}')">${addr}</div>`).join('')
+      : `<div style="font-family:var(--mono);font-size:12px;color:var(--muted)">No shared counterparties found.</div>`;
+
+    el.innerHTML = `
+      <div class="link-banner ${data.direct_link?'yes':'no'}">
+        ${data.direct_link
+          ? '⚠ Direct transaction link detected between these two wallets.'
+          : '✓ No direct transaction found between these wallets in fetched history.'}
+      </div>
+      <div class="compare-grid">${card(wa,'Wallet A')}${card(wb,'Wallet B')}</div>
+      <div class="card">
+        <div class="section-header">
+          <div class="section-title">Shared Counterparties</div>
+          <div class="section-count">${data.shared_count} found</div>
+        </div>
+        ${sharedHtml}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="error-box">✕ Compare request failed.</div>`;
+  }
+}
+
+// ─── Chain selector ───────────────────────────────────────────────────────────
+const CHAIN_CONFIG = {
+  BTC: {
+    name: 'Bitcoin', symbol: 'BTC', unit: 'BTC',
+    placeholder: 'Enter Bitcoin wallet address  e.g. bc1q…',
+    explorer: 'https://blockstream.info/address/',
+    color: '#f7931a',
+    note: 'Powered by Blockstream API',
+  },
+  ETH: {
+    name: 'Ethereum', symbol: 'ETH', unit: 'ETH',
+    placeholder: 'Enter Ethereum wallet address  e.g. 0x…',
+    explorer: 'https://etherscan.io/address/',
+    color: '#627eea',
+    note: 'Ethereum support — connect Etherscan/Alchemy API in backend',
+  },
+  LTC: {
+    name: 'Litecoin', symbol: 'LTC', unit: 'LTC',
+    placeholder: 'Enter Litecoin wallet address  e.g. ltc1…',
+    explorer: 'https://blockchair.com/litecoin/address/',
+    color: '#bfbbbb',
+    note: 'Litecoin support — connect Blockchair API in backend',
+  },
+  SOL: {
+    name: 'Solana', symbol: 'SOL', unit: 'SOL',
+    placeholder: 'Enter Solana wallet address  e.g. 5xBq…',
+    explorer: 'https://solscan.io/account/',
+    color: '#9945ff',
+    note: 'Solana support — connect Solana RPC in backend',
+  },
+  XRP: {
+    name: 'XRP', symbol: 'XRP', unit: 'XRP',
+    placeholder: 'Enter XRP wallet address  e.g. rN7n…',
+    explorer: 'https://xrpscan.com/account/',
+    color: '#346aa9',
+    note: 'XRP support — connect XRPL API in backend',
+  },
+};
+
+let currentChain = 'BTC';
+
+function selectChain(chain, btn) {
+  currentChain = chain;
+  const cfg = CHAIN_CONFIG[chain];
+
+  // Update button states
+  document.querySelectorAll('.chain-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Update input placeholder
+  const inp = document.getElementById('walletInput');
+  if (inp) inp.placeholder = cfg.placeholder;
+
+  // Show chain note in header
+  const badge = document.getElementById('chainBadge');
+  if (badge) {
+    badge.textContent = cfg.symbol + ' · ' + cfg.note;
+    badge.style.display = 'inline-flex';
+  }
+
+  // Clear current data since chain changed
+  if (currentChain !== chain) {
+    currentData = null;
+    currentAddr = '';
+    document.getElementById('tabsEl').style.display = 'none';
+    document.getElementById('content').innerHTML =
+      `<div class="state-empty"><div class="state-empty-icon">⬡</div><p>Enter a ${cfg.name} wallet address above to begin investigation</p></div>`;
+  }
+}
+
+// ─── Saved addresses dropdown ─────────────────────────────────────────────────
+const STORAGE_KEY = 'chainlink_saved_addrs';
+
+function getSavedAddresses() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function setSavedAddresses(arr) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+
+function saveCurrentAddress() {
+  const addr  = document.getElementById('walletInput').value.trim();
+  const label = document.getElementById('addrLabelInput').value.trim();
+  if (!addr) { alert('Enter an address first.'); return; }
+  const saved = getSavedAddresses();
+  if (saved.find(s => s.addr === addr)) { alert('Address already saved.'); return; }
+  saved.unshift({ addr, label: label || '', chain: currentChain, ts: Date.now() });
+  setSavedAddresses(saved.slice(0, 20)); // cap at 20
+  document.getElementById('addrLabelInput').value = '';
+  renderSavedList();
+}
+
+function deleteSavedAddress(addr) {
+  setSavedAddresses(getSavedAddresses().filter(s => s.addr !== addr));
+  renderSavedList();
+}
+
+function clearAllSaved() {
+  if (!confirm('Clear all saved addresses?')) return;
+  setSavedAddresses([]);
+  renderSavedList();
+}
+
+function renderSavedList() {
+  const saved = getSavedAddresses();
+  const el    = document.getElementById('savedAddrList');
+  if (!el) return;
+  if (!saved.length) {
+    el.innerHTML = `<div class="addr-dropdown-empty">No saved addresses yet.<br>Analyze a wallet and click "+ Save current".</div>`;
+    return;
+  }
+  const chainColors = { BTC:'#f7931a', ETH:'#627eea', LTC:'#bfbbbb', SOL:'#9945ff', XRP:'#346aa9' };
+  el.innerHTML = saved.map(s => `
+    <div class="addr-dropdown-item" onclick="loadSavedAddress('${s.addr}','${s.chain}')">
+      <span class="addr-item-chain" style="background:${chainColors[s.chain]||'#444'};color:${s.chain==='LTC'?'#000':'#fff'}">${s.chain}</span>
+      <span class="addr-item-addr">${s.addr}</span>
+      ${s.label ? `<span class="addr-item-label">${s.label}</span>` : ''}
+      <button class="addr-item-del" onclick="event.stopPropagation();deleteSavedAddress('${s.addr}')" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function loadSavedAddress(addr, chain) {
+  // Switch to correct chain
+  const btn = document.querySelector(`.chain-btn[data-chain="${chain}"]`);
+  if (btn) selectChain(chain, btn);
+  document.getElementById('walletInput').value = addr;
+  closeAddrDropdown();
+  lookupWallet();
+}
+
+function toggleAddrDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('addrDropdown');
+  if (!dd) return;
+  if (dd.style.display === 'none') {
+    renderSavedList();
+    dd.style.display = 'block';
+    // close on outside click
+    setTimeout(() => document.addEventListener('click', closeAddrDropdownOutside), 0);
+  } else {
+    closeAddrDropdown();
+  }
+}
+
+function closeAddrDropdown() {
+  const dd = document.getElementById('addrDropdown');
+  if (dd) dd.style.display = 'none';
+  document.removeEventListener('click', closeAddrDropdownOutside);
+}
+
+function closeAddrDropdownOutside(e) {
+  const dd = document.getElementById('addrDropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'addrDropdownBtn') {
+    closeAddrDropdown();
+  }
+}
+
+// Auto-save after successful lookup
+function autoSaveAddress(addr, chain) {
+  const saved = getSavedAddresses();
+  const existing = saved.find(s => s.addr === addr);
+  if (existing) { existing.ts = Date.now(); setSavedAddresses(saved); }
+  // don't auto-save without label, let user do it manually
+}
+
+// ─── Graph fullscreen ─────────────────────────────────────────────────────────
+let fsOverlay = null;
+let fsNetwork = null;
+
+function openGraphFullscreen() {
+  if (!currentAddr) return;
+
+  // Build overlay
+  fsOverlay = document.createElement('div');
+  fsOverlay.className = 'graph-fullscreen-overlay';
+  fsOverlay.innerHTML = `
+    <div class="fs-topbar">
+      <span class="fs-title">⬡ WALLET GRAPH — ${currentAddr.slice(0,14)}…${currentAddr.slice(-6)} · ${currentChain}</span>
+      <div style="display:flex;gap:8px">
+        <button class="graph-btn" onclick="document.getElementById('fsGraphFit')?.click()" id="fsGraphFit" style="display:none">⊡ Fit</button>
+        <button class="fs-close" onclick="closeGraphFullscreen()">✕ Exit Fullscreen</button>
+      </div>
+    </div>
+    <div style="flex:1;position:relative;background:var(--bg)">
+      <div id="fs-graph-canvas" style="width:100%;height:100%"></div>
+      <div id="fs-stats" style="position:absolute;bottom:12px;left:12px;display:flex;gap:14px;flex-wrap:wrap;pointer-events:none"></div>
+    </div>`;
+
+  document.body.appendChild(fsOverlay);
+  document.body.style.overflow = 'hidden';
+
+  // Fit button
+  fsOverlay.querySelector('#fsGraphFit').style.display = 'inline-flex';
+  fsOverlay.querySelector('#fsGraphFit').onclick = () => fsNetwork?.fit({ animation:{ duration:500, easingFunction:'easeInOutQuad' } });
+
+  // Keyboard escape
+  document._fsEscHandler = (e) => { if (e.key === 'Escape') closeGraphFullscreen(); };
+  document.addEventListener('keydown', document._fsEscHandler);
+
+  // Clone existing graph data into fullscreen canvas
+  if (graphNodes && graphEdges) {
+    const canvas = document.getElementById('fs-graph-canvas');
+    fsNetwork = new vis.Network(canvas,
+      { nodes: new vis.DataSet(graphNodes.get()), edges: new vis.DataSet(graphEdges.get()) },
+      {
+        physics: { enabled: false },
+        interaction: { hover:true, zoomView:true, dragView:true, tooltipDelay:80 },
+        nodes: { borderWidth:1.5, shadow:{ enabled:true, size:6, color:'rgba(0,0,0,0.4)' } },
+        edges: { smooth:{ type:'dynamic' } },
+      }
+    );
+    setTimeout(() => fsNetwork?.fit({ animation:{ duration:600 } }), 200);
+
+    // Show stats
+    if (currentData?.graph?.stats) {
+      const s = currentData.graph.stats;
+      const el = document.getElementById('fs-stats');
+      if (el) el.innerHTML = [
+        `<span class="graph-stat" style="background:rgba(6,10,15,.7);padding:4px 9px;border-radius:6px;border:1px solid var(--border)">Nodes <span>${s.node_count}</span></span>`,
+        `<span class="graph-stat" style="background:rgba(6,10,15,.7);padding:4px 9px;border-radius:6px;border:1px solid var(--border)">Edges <span>${s.edge_count}</span></span>`,
+      ].join('');
+    }
+  } else {
+    // No graph loaded yet — show message
+    document.getElementById('fs-graph-canvas').innerHTML =
+      `<div class="state-empty" style="padding:80px"><div class="state-empty-icon">⬡</div><p>Load the graph first by visiting the Graph tab.</p></div>`;
+  }
+}
+
+function closeGraphFullscreen() {
+  if (fsNetwork) { fsNetwork.destroy(); fsNetwork = null; }
+  if (fsOverlay) { fsOverlay.remove(); fsOverlay = null; }
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', document._fsEscHandler);
+}
+
+// ─── Open graph in new tab ────────────────────────────────────────────────────
+function openGraphNewTab() {
+  if (!graphNodes || !graphEdges) {
+    alert('Load the graph first by visiting the Graph tab.');
+    return;
+  }
+
+  const nodes = JSON.stringify(graphNodes.get());
+  const edges = JSON.stringify(graphEdges.get());
+  const addr  = currentAddr;
+  const chain = currentChain;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chainlink Graph — ${addr}</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"><\/script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#060a0f; color:#cdd9e5; font-family:'DM Mono',monospace; overflow:hidden; }
+  #toolbar { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#0a1018; border-bottom:1px solid #1a2535; flex-wrap:wrap; }
+  #net { width:100vw; height:calc(100vh - 50px); }
+  .tb-title { font-family:'Share Tech Mono',monospace; font-size:11px; letter-spacing:.1em; color:#4a6278; margin-right:auto; }
+  .tb-addr  { font-size:12px; color:#38bdf8; }
+  .tb-chain { font-size:10px; padding:2px 8px; border-radius:4px; font-family:monospace; }
+  button { padding:5px 11px; background:transparent; border:1px solid #1a2535; color:#7a94a8; font-size:10px; border-radius:6px; cursor:pointer; font-family:monospace; }
+  button:hover { border-color:#f97316; color:#f97316; }
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <span class="tb-title">⬡ CHAINLINK GRAPH</span>
+  <span class="tb-chain" style="background:#f7931a22;color:#f7931a;border:1px solid #f7931a44">${chain}</span>
+  <span class="tb-addr">${addr}</span>
+  <button onclick="net.fit({animation:{duration:500}})">⊡ Fit</button>
+  <button onclick="net.setOptions({physics:{enabled:true}})">⚡ Physics On</button>
+  <button onclick="net.setOptions({physics:{enabled:false}})">■ Physics Off</button>
+</div>
+<div id="net"></div>
+<script>
+const nodes = new vis.DataSet(${nodes});
+const edges = new vis.DataSet(${edges});
+const net   = new vis.Network(document.getElementById('net'), { nodes, edges }, {
+  physics: { enabled:false },
+  interaction: { hover:true, zoomView:true, dragView:true, tooltipDelay:80 },
+  nodes: { borderWidth:1.5, shadow:{ enabled:true, size:6, color:'rgba(0,0,0,0.4)' } },
+  edges: { smooth:{ type:'dynamic' } },
+});
+setTimeout(() => net.fit({ animation:{ duration:600 } }), 200);
+net.on('doubleClick', p => {
+  if (p.nodes.length > 0) {
+    window.opener?.setWallet?.(p.nodes[0]);
+  }
+});
+<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const tab  = window.open(url, '_blank');
+  if (!tab) alert('Pop-up blocked — please allow pop-ups for this page.');
+  // revoke after a delay
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+// ─── Inject chain badge into header ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const headerRight = document.querySelector('.header-right');
+  if (headerRight) {
+    const badge = document.createElement('span');
+    badge.id = 'chainBadge';
+    badge.className = 'chain-badge';
+    badge.style.display = 'none';
+    headerRight.prepend(badge);
+  }
+});
+function setWallet(addr) {
+  document.getElementById('walletInput').value = addr;
+  document.getElementById('compareA').value    = addr;
+  lookupWallet();
+}
+
+function copyAddress(addr) {
+  navigator.clipboard.writeText(addr).then(() => {
+    const btn = document.getElementById('copyAddrBtn');
+    if (!btn) return;
+    btn.textContent = 'COPIED'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyText(text, e) {
+  navigator.clipboard.writeText(text);
+  const row = e.currentTarget;
+  row.style.background = 'rgba(52,211,153,.05)';
+  setTimeout(() => row.style.background = '', 700);
+}
+</script>
+</body>
+</html>
