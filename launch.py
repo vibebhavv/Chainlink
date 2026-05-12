@@ -16,7 +16,7 @@ BACKEND_CMD = [
 ]
 
 FRONTEND_CMD = [
-    "python",
+    "python3",
     "-m",
     "http.server",
     "5500"
@@ -29,7 +29,7 @@ def start_backend():
     return subprocess.Popen(
         BACKEND_CMD,
         cwd=BACKEND_DIR,
-        shell=True
+        shell=False  # Fixed: shell=False with a list works correctly on Linux
     )
 
 
@@ -39,7 +39,7 @@ def start_frontend():
     return subprocess.Popen(
         FRONTEND_CMD,
         cwd=FRONTEND_DIR,
-        shell=True
+        shell=False  # Fixed: shell=False with a list works correctly on Linux
     )
 
 
