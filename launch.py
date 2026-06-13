@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 import time
 import webbrowser
 from pathlib import Path
@@ -10,13 +11,14 @@ BACKEND_DIR = ROOT_DIR
 FRONTEND_DIR = ROOT_DIR / "frontend"
 
 BACKEND_CMD = [
-    "uvicorn",
+    sys.executable,   # uses whatever python is running this script — works on Windows & Linux
+    "-m", "uvicorn",
     "backend.app:app",
     "--reload"
 ]
 
 FRONTEND_CMD = [
-    "python3",
+    sys.executable,   # same fix — no more python3 vs python mismatch
     "-m",
     "http.server",
     "5500"
@@ -25,26 +27,21 @@ FRONTEND_CMD = [
 
 def start_backend():
     print("[+] Starting FastAPI backend...")
-
     return subprocess.Popen(
         BACKEND_CMD,
         cwd=BACKEND_DIR,
-        shell=False  # Fixed: shell=False with a list works correctly on Linux
     )
 
 
 def start_frontend():
     print("[+] Starting frontend server...")
-
     return subprocess.Popen(
         FRONTEND_CMD,
         cwd=FRONTEND_DIR,
-        shell=False  # Fixed: shell=False with a list works correctly on Linux
     )
 
 
 def main():
-
     print("=" * 60)
     print("CHAINLINK LAUNCHER")
     print("=" * 60)
@@ -53,16 +50,13 @@ def main():
         print(f"[!] Frontend folder not found: {FRONTEND_DIR}")
         return
 
-    backend_process = start_backend()
-
+    backend_process  = start_backend()
     time.sleep(3)
 
     frontend_process = start_frontend()
-
     time.sleep(2)
 
     print("\n[+] Opening browser...")
-
     webbrowser.open("http://127.0.0.1:5500")
 
     print("\n[+] Services running")
@@ -73,14 +67,10 @@ def main():
     try:
         backend_process.wait()
         frontend_process.wait()
-
     except KeyboardInterrupt:
-
         print("\n[!] Shutting down...")
-
         backend_process.terminate()
         frontend_process.terminate()
-
         print("[+] Stopped")
 
 
