@@ -933,12 +933,23 @@ async function loadGraph() {
     graphNodes = new vis.DataSet(data.nodes);
     graphEdges = new vis.DataSet(data.edges);
 
+    // ── Assign hierarchical levels: target = 0, direct CPs = 1, depth-2 = 2 ──
+    const targetId = currentAddr;
+    const directNeighbours = new Set();
+    data.edges.forEach(e => {
+      if (e.from === targetId) directNeighbours.add(e.to);
+      if (e.to   === targetId) directNeighbours.add(e.from);
+    });
+    const levelUpdates = data.nodes.map(n => {
+      let lvl = 2;
+      if (n.id === targetId)             lvl = 0;
+      else if (directNeighbours.has(n.id)) lvl = 1;
+      return { id: n.id, level: lvl };
+    });
+    graphNodes.update(levelUpdates);
+
     graphNetwork = new vis.Network(canvas, { nodes: graphNodes, edges: graphEdges }, {
-      physics: {
-        enabled: physicsEnabled,
-        barnesHut: { gravitationalConstant: -3500, springLength: 200, springConstant: 0.025, damping: 0.12 },
-        stabilization: { iterations: 150, fit: true },
-      },
+      physics: { enabled: false },          // no physics needed for hierarchical
       interaction: {
         hover: true,
         zoomView: true,
@@ -947,9 +958,24 @@ async function loadGraph() {
         tooltipDelay: 100,
         multiselect: false,
       },
-      nodes:  { borderWidth: 1.5, shadow: { enabled: true, size: 6, color: 'rgba(0,0,0,0.4)' } },
-      edges:  { smooth: { type: 'dynamic' }, shadow: false },
-      layout: { improvedLayout: true },
+      nodes: { borderWidth: 1.5, shadow: { enabled: true, size: 6, color: 'rgba(0,0,0,0.4)' } },
+      edges: {
+        smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 },
+        shadow: false,
+      },
+      layout: {
+        hierarchical: {
+          enabled:          true,
+          direction:        'LR',          // Left → Right tree
+          sortMethod:       'directed',
+          levelSeparation:  220,           // horizontal gap between levels
+          nodeSpacing:      90,            // vertical gap between nodes
+          treeSpacing:      160,           // gap between separate trees
+          blockShifting:    true,
+          edgeMinimization: true,
+          parentCentralization: true,
+        },
+      },
     });
 
     // Click: show node panel
@@ -968,14 +994,14 @@ async function loadGraph() {
       }
     });
 
-    // After stabilisation, disable physics to save CPU
-    graphNetwork.once('stabilizationIterationsDone', () => {
-      if (physicsEnabled) {
-        graphNetwork.setOptions({ physics: { enabled: false } });
-        physicsEnabled = false;
-        document.getElementById('physicsBtn')?.classList.remove('active');
-      }
+    // Fit the tree to the canvas after layout is done
+    graphNetwork.once('afterDrawing', () => {
+      graphNetwork.fit({ animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
     });
+
+    // Keep physicsBtn state in sync (tree layout = physics off)
+    physicsEnabled = false;
+    document.getElementById('physicsBtn')?.classList.remove('active');
 
   } catch(e) {
     if (canvas) canvas.innerHTML = `<div class="error-box" style="margin:20px">✕ Failed to load graph data. Check console for details.</div>`;
@@ -997,7 +1023,27 @@ function graphZoom(factor) {
 function togglePhysics() {
   if (!graphNetwork) return;
   physicsEnabled = !physicsEnabled;
-  graphNetwork.setOptions({ physics: { enabled: physicsEnabled } });
+  if (physicsEnabled) {
+    graphNetwork.setOptions({
+      layout:  { hierarchical: { enabled: false } },
+      physics: {
+        enabled: true,
+        barnesHut: { gravitationalConstant: -3500, springLength: 200, springConstant: 0.025, damping: 0.12 },
+        stabilization: { iterations: 150, fit: true },
+      },
+    });
+  } else {
+    graphNetwork.setOptions({
+      physics: { enabled: false },
+      layout:  {
+        hierarchical: {
+          enabled: true, direction: 'LR', sortMethod: 'directed',
+          levelSeparation: 220, nodeSpacing: 90, treeSpacing: 160,
+          blockShifting: true, edgeMinimization: true, parentCentralization: true,
+        },
+      },
+    });
+  }
   const btn = document.getElementById('physicsBtn');
   if (btn) btn.classList.toggle('active', physicsEnabled);
 }
