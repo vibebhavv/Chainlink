@@ -17,6 +17,7 @@ from backend.services.btc_service import (
     get_wallet_info,
     get_wallet_transactions,
     get_wallet_utxos,
+    CHAIN_CONFIG,
 )
 from backend.utils.parser import (
     parse_transactions,
@@ -25,12 +26,10 @@ from backend.utils.parser import (
 )
 from backend.graphs.wallet_graph import build_graph_data, build_multihop_graph
 
-# ─── App setup ────────────────────────────────────────────────────────────────
-
 app = FastAPI(
     title="Chainlink OSINT API",
-    description="Bitcoin wallet intelligence & graph analysis",
-    version="2.1.0",
+    description="Multi-chain wallet intelligence & graph analysis",
+    version="2.2.0",
 )
 
 app.add_middleware(
@@ -42,14 +41,25 @@ app.add_middleware(
 )
 
 
-# ─── Shared helpers ───────────────────────────────────────────────────────────
+SUPPORTED_CHAINS = list(CHAIN_CONFIG.keys())   # ["BTC", "ETH", "LTC", "SOL", "XRP"]
 
-def _require_valid_address(address: str) -> None:
-    if not validate_address(address):
+
+def _require_valid_address(address: str, chain: str = "BTC") -> None:
+    if not validate_address(address, chain=chain):
         raise HTTPException(
             status_code=400,
-            detail=f"'{address}' is not a valid Bitcoin address.",
+            detail=f"'{address}' is not a valid {chain} address.",
         )
+
+
+def _require_valid_chain(chain: str) -> str:
+    c = chain.upper()
+    if c not in SUPPORTED_CHAINS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported chain '{chain}'. Supported: {SUPPORTED_CHAINS}",
+        )
+    return c
 
 
 def _chain_stats(wallet_info: dict) -> dict:
@@ -59,22 +69,20 @@ def _chain_stats(wallet_info: dict) -> dict:
 def _mempool_stats(wallet_info: dict) -> dict:
     return wallet_info.get("mempool_stats", {})
 
-
-# ─── Core routes ──────────────────────────────────────────────────────────────
-
 @app.get("/")
 def home():
     return {
-        "tool":    "Chainlink BTC Wallet OSINT",
-        "version": "2.1.0",
-        "status":  "running",
+        "tool":             "Chainlink BTC Wallet OSINT",
+        "version":          "2.2.0",
+        "status":           "running",
+        "supported_chains": SUPPORTED_CHAINS,
         "endpoints": [
-            "GET  /wallet/{address}",
-            "GET  /wallet/{address}/summary",
-            "GET  /wallet/{address}/utxos",
-            "GET  /wallet/{address}/graph",
-            "GET  /wallet/{address}/hops?depth=2&max_nodes=80",
-            "GET  /compare?a={addr1}&b={addr2}",
+            "GET  /wallet/{address}?chain=BTC",
+            "GET  /wallet/{address}/summary?chain=BTC",
+            "GET  /wallet/{address}/utxos?chain=BTC",
+            "GET  /wallet/{address}/graph?chain=BTC",
+            "GET  /wallet/{address}/hops?chain=BTC&depth=2&max_nodes=80",
+            "GET  /compare?a={addr1}&b={addr2}&chain=BTC",
             "POST /case/create/{name}",
             "GET  /cases",
             "GET  /case/{name}",
@@ -87,26 +95,26 @@ def home():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {"status": "healthy", "supported_chains": SUPPORTED_CHAINS}
 
-
-# ── Full wallet analysis ──────────────────────────────────────────────────────
 
 @app.get("/wallet/{address}")
 def wallet_lookup(
     address: str,
+    chain:   str = Query(default="BTC", description="Chain: BTC, ETH, LTC, SOL, XRP"),
     max_txs: int = Query(default=100, ge=1, le=250),
 ):
-    _require_valid_address(address)
+    chain = _require_valid_chain(chain)
+    _require_valid_address(address, chain)
 
-    wallet_info = get_wallet_info(address)
+    wallet_info = get_wallet_info(address, chain=chain)
     if not wallet_info:
         raise HTTPException(status_code=404, detail="Wallet not found or API unavailable.")
 
-    transactions  = get_wallet_transactions(address, max_txs=max_txs)
+    transactions  = get_wallet_transactions(address, max_txs=max_txs, chain=chain)
     parsed_txs    = parse_transactions(transactions, address)
     profile       = build_wallet_profile(parsed_txs, address)
-    risk_analysis = calculate_risk_score(parsed_txs)  # called once
+    risk_analysis = calculate_risk_score(parsed_txs)
 
     cs = _chain_stats(wallet_info)
     ms = _mempool_stats(wallet_info)
@@ -118,7 +126,8 @@ def wallet_lookup(
 
     return {
         "wallet":             address,
-        "address_type":       detect_address_type(address),
+        "chain":              chain,
+        "address_type":       detect_address_type(address, chain=chain),
         "balance_btc":        satoshi_to_btc((funded_chain + funded_mem) - (spent_chain + spent_mem)),
         "total_received_btc": satoshi_to_btc(funded_chain),
         "total_sent_btc":     satoshi_to_btc(spent_chain),
@@ -131,13 +140,15 @@ def wallet_lookup(
     }
 
 
-# ── Lightweight summary ───────────────────────────────────────────────────────
-
 @app.get("/wallet/{address}/summary")
-def wallet_summary(address: str):
-    _require_valid_address(address)
+def wallet_summary(
+    address: str,
+    chain:   str = Query(default="BTC"),
+):
+    chain = _require_valid_chain(chain)
+    _require_valid_address(address, chain)
 
-    wallet_info = get_wallet_info(address)
+    wallet_info = get_wallet_info(address, chain=chain)
     if not wallet_info:
         raise HTTPException(status_code=404, detail="Wallet not found or API unavailable.")
 
@@ -149,7 +160,8 @@ def wallet_summary(address: str):
 
     return {
         "wallet":             address,
-        "address_type":       detect_address_type(address),
+        "chain":              chain,
+        "address_type":       detect_address_type(address, chain=chain),
         "balance_btc":        satoshi_to_btc(funded - spent),
         "total_received_btc": satoshi_to_btc(cs.get("funded_txo_sum", 0)),
         "total_sent_btc":     satoshi_to_btc(cs.get("spent_txo_sum",  0)),
@@ -158,14 +170,15 @@ def wallet_summary(address: str):
         "utxo_count":         cs.get("funded_txo_count", 0) - cs.get("spent_txo_count", 0),
     }
 
-
-# ── UTXO set ──────────────────────────────────────────────────────────────────
-
 @app.get("/wallet/{address}/utxos")
-def wallet_utxos(address: str):
-    _require_valid_address(address)
+def wallet_utxos(
+    address: str,
+    chain:   str = Query(default="BTC"),
+):
+    chain = _require_valid_chain(chain)
+    _require_valid_address(address, chain)
 
-    raw_utxos = get_wallet_utxos(address)
+    raw_utxos = get_wallet_utxos(address, chain=chain)
 
     enriched: list[dict] = []
     total_btc = 0.0
@@ -185,60 +198,57 @@ def wallet_utxos(address: str):
 
     return {
         "wallet":     address,
+        "chain":      chain,
         "utxo_count": len(enriched),
         "total_btc":  round(total_btc, 8),
         "utxos":      enriched,
     }
 
-
-# ── Graph data ────────────────────────────────────────────────────────────────
-
 @app.get("/wallet/{address}/graph")
 def wallet_graph(
     address:   str,
+    chain:     str = Query(default="BTC"),
     max_txs:   int = Query(default=100, ge=1,  le=250),
     max_nodes: int = Query(default=60,  ge=5,  le=150),
 ):
-    _require_valid_address(address)
+    chain = _require_valid_chain(chain)
+    _require_valid_address(address, chain)
 
-    transactions = get_wallet_transactions(address, max_txs=max_txs)
+    transactions = get_wallet_transactions(address, max_txs=max_txs, chain=chain)
     parsed_txs   = parse_transactions(transactions, address)
     graph_data   = build_graph_data(address, parsed_txs, max_nodes=max_nodes)
 
-    return {"wallet": address, **graph_data}
-
-
-# ── Multi-hop network ─────────────────────────────────────────────────────────
+    return {"wallet": address, "chain": chain, **graph_data}
 
 @app.get("/wallet/{address}/hops")
 def wallet_hops(
     address:   str,
+    chain:     str = Query(default="BTC"),
     depth:     int = Query(default=2,  ge=1, le=3),
     max_nodes: int = Query(default=80, ge=10, le=150),
     max_txs:   int = Query(default=50, ge=1,  le=100),
 ):
-    _require_valid_address(address)
+    chain = _require_valid_chain(chain)
+    _require_valid_address(address, chain)
 
-    origin_txs    = get_wallet_transactions(address, max_txs=max_txs)
+    origin_txs    = get_wallet_transactions(address, max_txs=max_txs, chain=chain)
     parsed_origin = parse_transactions(origin_txs, address)
     all_parsed: dict[str, list[dict]] = {address: parsed_origin}
 
-    # Depth-1: direct counterparties
     cp_set: set[str] = set()
     for tx in parsed_origin:
         for cp in tx.get("counterparties", []):
             a = cp.get("address", "")
-            if a and validate_address(a):
+            if a and validate_address(a, chain=chain):
                 cp_set.add(a)
 
     for cp_addr in list(cp_set)[:20]:
         if cp_addr in all_parsed:
             continue
         all_parsed[cp_addr] = parse_transactions(
-            get_wallet_transactions(cp_addr, max_txs=25), cp_addr
+            get_wallet_transactions(cp_addr, max_txs=25, chain=chain), cp_addr
         )
 
-    # Depth-2: neighbours of depth-1
     if depth >= 2:
         d2_candidates: set[str] = set()
         for addr, txs in list(all_parsed.items()):
@@ -247,14 +257,14 @@ def wallet_hops(
             for tx in txs:
                 for cp in tx.get("counterparties", []):
                     a = cp.get("address", "")
-                    if a and a not in all_parsed and validate_address(a):
+                    if a and a not in all_parsed and validate_address(a, chain=chain):
                         d2_candidates.add(a)
 
         for d2_addr in list(d2_candidates)[:15]:
             if d2_addr in all_parsed:
                 continue
             all_parsed[d2_addr] = parse_transactions(
-                get_wallet_transactions(d2_addr, max_txs=15), d2_addr
+                get_wallet_transactions(d2_addr, max_txs=15, chain=chain), d2_addr
             )
 
     graph_data = build_multihop_graph(
@@ -264,28 +274,28 @@ def wallet_hops(
         max_nodes=max_nodes,
     )
 
-    return {"wallet": address, "depth": depth, **graph_data}
+    return {"wallet": address, "chain": chain, "depth": depth, **graph_data}
 
-
-# ── Wallet comparison ─────────────────────────────────────────────────────────
 
 @app.get("/compare")
 def compare_wallets(
-    a: str = Query(..., description="First wallet address"),
-    b: str = Query(..., description="Second wallet address"),
+    a:     str = Query(..., description="First wallet address"),
+    b:     str = Query(..., description="Second wallet address"),
+    chain: str = Query(default="BTC"),
 ):
-    _require_valid_address(a)
-    _require_valid_address(b)
+    chain = _require_valid_chain(chain)
+    _require_valid_address(a, chain)
+    _require_valid_address(b, chain)
 
-    info_a = get_wallet_info(a)
-    info_b = get_wallet_info(b)
+    info_a = get_wallet_info(a, chain=chain)
+    info_b = get_wallet_info(b, chain=chain)
     if not info_a:
         raise HTTPException(status_code=404, detail=f"Wallet A ({a}) not found.")
     if not info_b:
         raise HTTPException(status_code=404, detail=f"Wallet B ({b}) not found.")
 
-    ptxs_a = parse_transactions(get_wallet_transactions(a, max_txs=75), a)
-    ptxs_b = parse_transactions(get_wallet_transactions(b, max_txs=75), b)
+    ptxs_a = parse_transactions(get_wallet_transactions(a, max_txs=75, chain=chain), a)
+    ptxs_b = parse_transactions(get_wallet_transactions(b, max_txs=75, chain=chain), b)
 
     risk_a = calculate_risk_score(ptxs_a)
     risk_b = calculate_risk_score(ptxs_b)
@@ -303,7 +313,8 @@ def compare_wallets(
         spent  = cs.get("spent_txo_sum",  0) + ms.get("spent_txo_sum",  0)
         return {
             "address":          addr,
-            "address_type":     detect_address_type(addr),
+            "chain":            chain,
+            "address_type":     detect_address_type(addr, chain=chain),
             "balance_btc":      satoshi_to_btc(funded - spent),
             "total_received":   satoshi_to_btc(cs.get("funded_txo_sum", 0)),
             "total_sent":       satoshi_to_btc(cs.get("spent_txo_sum",  0)),
@@ -317,6 +328,7 @@ def compare_wallets(
         }
 
     return {
+        "chain":                 chain,
         "wallet_a":              _card(a, info_a, prof_a, risk_a),
         "wallet_b":              _card(b, info_b, prof_b, risk_b),
         "direct_link":           b in cp_a or a in cp_b,
@@ -324,8 +336,6 @@ def compare_wallets(
         "shared_count":          len(shared),
     }
 
-
-# ─── Case management ──────────────────────────────────────────────────────────
 
 @app.post("/case/create/{case_name}")
 def create_new_case(case_name: str):
@@ -351,13 +361,18 @@ def get_case(case_name: str):
 
 
 @app.post("/case/{case_name}/wallet/{wallet}")
-def add_wallet(case_name: str, wallet: str):
+def add_wallet(
+    case_name: str,
+    wallet:    str,
+    chain:     str = Query(default="BTC"),
+):
     """Add a wallet address to an existing case."""
-    _require_valid_address(wallet)
+    chain = _require_valid_chain(chain)
+    _require_valid_address(wallet, chain)
     success = add_wallet_to_case(case_name, wallet)
     if not success:
         raise HTTPException(status_code=404, detail=f"Case '{case_name}' not found.")
-    return {"success": True, "wallet": wallet, "case": case_name}
+    return {"success": True, "wallet": wallet, "chain": chain, "case": case_name}
 
 
 @app.post("/case/{case_name}/note")
